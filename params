@@ -1,0 +1,27 @@
+# SOLVER PARAMETERS
+#balas_max_branch    : 4
+#balas_max_singl     : 2
+#debug               : 0
+MIP_cuts_factor     : 0
+
+# nodesel: 0..3 (default 1), varsel: -1..4 (default 0)
+#MIP_nodesel         : 1
+#MIP_varsel          : 0
+
+num_threads         : 8
+#balasng_cuts_num    : 0
+
+# choose: none, cplex, dominance
+presolver           : none
+# choose: cplex, balasbcrule1, balasbcrule1-test, balasbcrule2, maxcol
+solver              : none
+verbosity           : 0
+
+# LAUNCHER PARAMETERS
+lnc-cluster         : 0
+#lnc-compile         : 0
+lnc-instances       : scpnr[efgh][1-5].lp$
+lnc-repeat          : 1
+lnc-runner          : 06
+lnc-seed            : 0
+lnc-time_limits     : 3600

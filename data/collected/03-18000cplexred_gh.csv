@@ -1,0 +1,19 @@
+num_threads : 1
+lnc-runner : 06-07
+solver : cplex
+MIP_reduce_prob : 1
+presolver : none
+lnc-repeat : 5
+MIP_cuts_factor : 0
+lnc-time_limits : 18000
+Instance;Presolver time;Solver time;Obj val;Best obj val;MIP gap;Node total;Node left
+scpnrg1_red;0.02;17478.97;176.0;174.24;1.0;1188044.2;205718.6
+scpnrg2_red;0.01;2716.78;154.0;154.0;0.0;211023.8;0.0
+scpnrg3_red;0.02;18000.0;166.8;162.0;2.88;1348762.4;829312.4
+scpnrg4_red;0.02;18000.0;168.2;164.28;2.33;1251243.0;661292.0
+scpnrg5_red;0.02;18000.0;168.0;162.96;3.0;1198035.0;734644.6
+scpnrh1_red;0.02;18000.0;64.0;55.6;13.12;1154111.6;995073.4
+scpnrh2_red;0.03;18000.01;63.8;56.31;11.73;1386090.8;1172214.8
+scpnrh3_red;0.03;18000.0;60.0;52.61;12.3;1347406.0;1125535.0
+scpnrh4_red;0.03;18000.01;58.8;51.24;12.85;1381447.0;1158221.8
+scpnrh5_red;0.03;18000.0;55.0;50.01;9.07;1328002.8;995723.6

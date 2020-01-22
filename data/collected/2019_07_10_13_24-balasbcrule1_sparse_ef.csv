@@ -1,0 +1,20 @@
+balas_max_branch : 6
+lnc-runner : 06-07
+num_threads : 1
+balas_max_singl : 2
+solver : balasbcrule1-sparse
+lnc-time_limits : 3600
+lnc-repeat : 5
+MIP_cuts_factor : 0
+lnc-seed : 0
+Instance;Solver time;Obj val;Best obj val;MIP gap;Node total;Node left
+scpnre1_red;169.32;29.0;29.0;0.0;38592.4;0.0
+scpnre2_red;1344.02;30.0;30.0;0.0;302578.4;0.0
+scpnre3_red;59.15;27.0;27.0;0.0;11670.4;0.0
+scpnre4_red;123.6;28.0;28.0;0.0;27104.8;0.0
+scpnre5_red;45.44;28.0;28.0;0.0;8469.0;0.0
+scpnrf1_red;107.9;14.0;14.0;0.0;28988.0;0.0
+scpnrf2_red;83.22;15.0;15.0;0.0;22897.8;0.0
+scpnrf3_red;106.79;14.0;14.0;0.0;23826.6;0.0
+scpnrf4_red;263.7;14.0;14.0;0.0;63346.2;0.0
+scpnrf5_red;1510.96;13.4;13.4;0.0;485280.2;0.0

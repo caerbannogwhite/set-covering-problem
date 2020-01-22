@@ -1,0 +1,219 @@
+#! /usr/bin/python
+from __future__ import print_function
+
+import argparse
+import csv
+import itertools
+import os
+import re
+import random
+
+from time import strftime, gmtime
+
+
+# def compile(params):
+#     """
+#     Compile set_covering project producing the exect file
+#     bin/SetCoveringMain. Spevify in params file for compiling
+#     in local or cluster.
+#
+#     :param params: dictionary containing values in params file
+#     :return: None
+#     """
+#
+#     if params['lnc-cluster']:
+#         cplex_home = '/nfsd/opt/CPLEX12.6/cplex'
+#     else:
+#         cplex_home = '/opt/ibm/ILOG/CPLEX_Studio128/cplex'
+#
+#     cc = 'gcc'
+#     exe = 'SetCoveringMain'
+#     inc = '-I' + cplex_home + '/include/ilcplex'
+#     libs = '-L' + cplex_home + '/lib/x86-64_linux/static_pic -lcplex -lm -lpthread -ldl'
+#     opt = '-O2'
+#
+#     for file in os.listdir('src'):
+#         if (not file[0] == '_') and (file.split('.')[-1] == 'c'):
+#             os.system(' '.join([cc, '-c src/'+file, '-o bin/'+file+'.o', inc, opt]))
+#
+#     os.system(' '.join([cc, '-o bin/'+exe, 'bin/main.c.o', libs, opt]))
+
+
+def read_params():
+    """
+    Read params file producing a params dict instance.
+
+    :return: params dictionary
+    """
+
+    params = dict()
+
+    handler = open('params', 'r')
+    for line in handler:
+        line = line.strip()
+
+        if len(line) == 0 or line[0] == '#':
+            continue
+
+        p, v = line.split(':')
+        p = p.strip()
+        v = v.strip()
+
+        if p in ['MIP_reduce_prob', 'MIP_varsel', 'MIP_nodesel', 'MIP_cuts_factor', 'balas_max_branch', 'balas_max_singl', 'balasng_cuts_num', 'num_threads', 'presolver', 'solver', 'verbosity', 'lnc-runner']:
+            params[p] = v
+        elif p == 'lnc-instances':
+            regex = re.compile(v)
+            params[p] = list(filter(regex.match, os.listdir('data/models/')))
+        elif p in ['debug', 'lnc-cluster', 'lnc-compile', 'lnc-save_results']:
+            params[p] = bool(int(v))
+        elif p in ['lnc-repeat', 'lnc-seed']:
+            params[p] = int(v)
+        elif p == 'lnc-time_limits':
+            params[p] = [i for i in v.split(',')]
+        else:
+            print('LAUNCHER ERROR: parameter %s unknown.' % (p))
+
+    handler.close()
+
+    return params
+
+
+def batch(params):
+    """
+    Execute instances.
+
+    :param params:
+    :return: None
+    """
+
+    # if params['lnc-compile']:
+    #     compile(params)
+
+    random.seed(params['lnc-seed'])
+    for rep, time, inst in itertools.product(range(params['lnc-repeat'])[::-1], params['lnc-time_limits'], params['lnc-instances']):
+
+        inst_name = str(rep) + '_' + params['lnc-runner'] + '_' + time + '_' + inst.split('.')[0]
+        seed = str(random.randint(0, 1000000))
+        print("\nLaunching", inst_name, "with seed", seed)
+
+        solver_params = ['./cmake-build-debug/set_covering', '--MIP_time_limit '+time, '--instance data/models/'+inst, '--random_seed ' + seed]
+        for p in params:
+            if not 'lnc-' in p:
+                solver_params.append('--'+p+' '+str(params[p]))
+
+        if params['lnc-cluster']:
+            os.system('echo "' + ' '.join(solver_params) + '" | qsub -cwd -q Q@runner-'+params['lnc-runner']+'.dei.unipd.it -o '+inst_name+'.out -e '+inst_name+'.err')
+        else:
+            cmd = ' '.join(solver_params + ['>'+inst_name+'.out'])
+            print("cmd: %s" % (cmd))
+            os.system(cmd)
+
+
+def collect_data(params):
+    """
+    Collect all output file .out in the current directory and
+    store data in csv file at data/colleced/.
+
+    :return: None
+    """
+
+    data = []
+    for file in sorted(os.listdir('.')):
+        spt = file.split('.')
+        if len(spt) == 2:
+            name, ext = spt
+        else:
+            continue
+
+        if ext == 'out':
+
+            d = {'Instance' : name}
+
+            fh = open(file, 'r')
+            for row in fh:
+                row = row.strip()
+                if len(row) > 0:
+                    p, v = row.split('=')
+                    p = p.strip()
+                    v = v.strip()
+
+                    if p == 'Preolver time':
+                        p = 'Presolver time'
+
+                    if p == 'cols':
+                        continue
+
+                    d[p] = v
+
+            fh.close()
+            #os.remove(file)
+
+            d['Presolver time'] = round(float(d['Presolver time']), 4)
+            d['Solver time'] = round(float(d['Solver time']), 4)
+            d['Obj val'] = round(float(d['Obj val']), 4)
+            d['Best obj val'] = round(float(d['Best obj val']), 4)
+            if d['Obj val'] > 1e-4:
+                d['MIP gap'] = round((1 - d['Best obj val'] / d['Obj val']) * 100, 4)
+            else:
+                d['MIP gap'] = 0
+            d['Node total'] = float(d['Node total'])
+            d['Node left'] = float(d['Node left'])
+
+            data.append(d)
+
+    merged_data = dict()
+    for d in data:
+        spt = d['Instance'].split('_')
+        rep, run, time, inst = spt[0], spt[1], spt[2], spt[3:]
+        inst = '_'.join([time] + inst)
+
+        if inst in merged_data:
+            for k in d:
+                merged_data[inst][k].append(d[k])
+        else:
+            merged_data[inst] = {k:[d[k]] for k in d}
+
+
+    for inst in merged_data:
+        for k in merged_data[inst]:
+            if k == 'Instance':
+                instance = inst.split('_')[1:]
+                merged_data[inst][k] = '_'.join(instance)
+            else:
+                merged_data[inst][k] = round(sum(merged_data[inst][k]) / len(merged_data[inst][k]), 2)
+
+
+    if len(merged_data) == 0:
+        print("Launcher: no file found to collect data.")
+        return
+
+    csv_fh = open('data/collected/run_'+strftime('%Y_%m_%d_%H_%M', gmtime())+'.csv', 'w')
+    for p in params:
+        csv_fh.write("%s : %s\n" % (p, str(params[p])))
+
+
+    my_dialect = csv.excel_tab
+    my_dialect.escapechar = '\n'
+    my_dialect.delimiter = ';'
+
+    csv_writer = csv.DictWriter(csv_fh, dialect=my_dialect, fieldnames=['Instance', 'Presolver time', 'Solver time', 'Obj val', 'Best obj val', 'MIP gap', 'Node total', 'Node left'])
+    csv_writer.writeheader()
+    for inst in sorted(merged_data):
+        csv_writer.writerow(merged_data[inst])
+    csv_fh.close()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="""Lauch SetCoverMain, compile or collect data after computation.""")
+    parser.add_argument('--collect', action='store_true')
+    parser.add_argument('--compile', action='store_true')
+    args = parser.parse_args()
+
+    params = read_params()
+
+    if args.collect:
+        collect_data(params)
+    elif args.compile:
+        compile(params)
+    else:
+        batch(params)

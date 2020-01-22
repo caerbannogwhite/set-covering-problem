@@ -1,0 +1,18 @@
+num_threads : 1
+lnc-runner : 06-07
+solver : maxcol
+lnc-time_limits : 3600
+lnc-repeat : 5
+MIP_cuts_factor : 0
+lnc-seed : 0
+Instance;Solver time;Obj val;Best obj val;MIP gap;Node total;Node left
+scpnre1_red;721.53;29.0;29.0;0.0;143530.8;0.0
+scpnre2_red;3600.0;31.0;28.32;8.66;882905.0;408503.2
+scpnre3_red;293.3;27.0;27.0;0.0;56023.4;0.0
+scpnre4_red;583.58;28.0;28.0;0.0;129085.0;0.0
+scpnre5_red;149.83;28.0;28.0;0.0;32773.0;0.0
+scpnrf1_red;142.06;14.0;14.0;0.0;53791.6;0.0
+scpnrf2_red;92.6;15.0;15.0;0.0;36516.8;0.0
+scpnrf3_red;108.57;14.0;14.0;0.0;40421.8;0.0
+scpnrf4_red;318.17;14.0;14.0;0.0;134028.6;0.0
+scpnrf5_red;909.1;13.0;13.0;0.0;358817.6;0.0
