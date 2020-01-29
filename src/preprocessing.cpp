@@ -1,7 +1,5 @@
 
-#include <cplex.h>
-#include "aux.h"
-#include "preprocessing.h"
+#include "preprocessing.hpp"
 
 /** Dominance presolver routine: see report.
  *	The function receives a set-covering instance, scanning it to find the last column
@@ -10,7 +8,8 @@
  *	procedure scans these columns to find the ones that must be included in the
  *	reduced model (resetting the upper bound to 1).
  */
-int SCdominancepresolver(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {
+int SCdominancepresolver(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
+{
 
     char b = 'B', u = 'U';
     int i, j, ncols, nrows, stat, lastcol, removed_cols = 0;

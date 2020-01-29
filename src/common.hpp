@@ -1,6 +1,20 @@
 
-#ifndef TESI_SET_COVER_AUX_H
-#define TESI_SET_COVER_AUX_H
+#ifndef SC_COMMON_H
+#define SC_COMMON_H
+
+#include <boost/program_options.hpp>
+#include <cplex.h>
+#include <cpxconst.h>
+#include <iostream>
+#include <math.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+using namespace std;
+namespace po = boost::program_options;
 
 #define DEBUG_VERBOSITY				0
 
@@ -17,8 +31,6 @@
 #define SC_ERR_CPXDUAL_0			32
 #define SC_ERR_BALAS_COND_VIOLATED	40
 #define SC_ERR_BALAS_BRANCH_RULE_1	41
-
-#define DBL_MAX 					1.7976931348623158e+308
 
 // data structures
 typedef struct SCinstance {
@@ -68,7 +80,7 @@ typedef struct SCnodedata {
     int q;
     int p;
     int seqnum;
-    unsigned char *qmat;
+    char *qmat;
     int *rqbeg;
     int *rqind;
 } SCnodedata;
@@ -100,10 +112,10 @@ int SCi3tuple_cmpa(const void *p, const void *q);
 int SCi3tuple_cmparev(const void *p, const void *q);
 int SCidtuple_cmpb(const void *p, const void *q);
 
-double func1(double c, unsigned int k);
-double func2(double c, unsigned int k);
-double func3(double c, unsigned int k);
-double func4(double c, unsigned int k);
-double func5(double c, unsigned int k);
+double func1(double c, int k);
+double func2(double c, int k);
+double func3(double c, int k);
+double func4(double c, int k);
+double func5(double c, int k);
 
-#endif //TESI_SET_COVER_AUX_H
+#endif //SC_COMMON_H

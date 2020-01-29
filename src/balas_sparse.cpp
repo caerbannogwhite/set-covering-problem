@@ -1,15 +1,13 @@
-#include <cplex.h>
-#include <math.h>
-#include <string.h>
-#include "balas_sparse.h"
+
+#include "balas_sparse.hpp"
 
 int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg,
-		const int *cmatind, unsigned const int nrows, unsigned const int ncols, int *xind,
-		unsigned const int xindlen) {
+		const int *cmatind, const int nrows, const int ncols, int *xind,
+		const int xindlen) {
 
 	char flag;
-	unsigned int i, j, k, removedcnt;
-	unsigned int *matdotx = (unsigned int *) malloc(nrows * sizeof(int));
+	int i, j, k, removedcnt;
+	int *matdotx = (int *) malloc(nrows * sizeof(int));
 
 	for (i = 0; i < nrows; ++i) {
 		matdotx[i] = 0;
@@ -61,15 +59,15 @@ int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatb
 
 
 double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
-		const double *obj, const unsigned int nrows, const unsigned int ncols, int *xind, unsigned int *xindlen,
+		const double *obj, const int nrows, const int ncols, int *xind, int *xindlen,
 		const int whichfunc) {
 
 	char flag;
 	int jt, it;
 	int *item, *rset, *rsetnew;
-	unsigned int i, j, k, cnt, cvdrows, rsetlen;
+	int i, j, k, cnt, cvdrows, rsetlen;
 	double v, zu;
-	double (*func)(const double, const unsigned int);
+	double (*func)(const double, const int);
 	SCi2tuple *rsettup;
 
 	switch (whichfunc) {
@@ -173,7 +171,7 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 			cnt = 0;
 			for (i = 0; i < rsetlen; ++i) {
 				if (rset[i] != -1) {
-					item = bsearch(&rset[i], &cmatind[cmatbeg[j]], cmatbeg[j+1] - cmatbeg[j], sizeof(int), SCint_cmp);
+					item = (int *) bsearch(&rset[i], &cmatind[cmatbeg[j]], cmatbeg[j+1] - cmatbeg[j], sizeof(int), SCint_cmp);
 					if (item != NULL) {
 						cnt++;
 						if (rset[i] == it) {
@@ -204,7 +202,7 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 
 		cnt = 0;
 		for (i = 0; i < rsetlen; ++i) {
-			item = bsearch(&rset[i], &cmatind[cmatbeg[jt]], cmatbeg[jt+1] - cmatbeg[jt], sizeof(int), SCint_cmp);
+			item = (int *) bsearch(&rset[i], &cmatind[cmatbeg[jt]], cmatbeg[jt+1] - cmatbeg[jt], sizeof(int), SCint_cmp);
 			if (item == NULL) {
 				rsetnew[cnt] = rset[i];
 				cnt++;
@@ -238,8 +236,8 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 }
 
 
-int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const unsigned int nrows,
-		const unsigned int ncols, double *u, double *s) {
+int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const int nrows,
+		const int ncols, double *u, double *s) {
 
 	char le = 'L';
 	int error, i, j, nzcnt, status;
@@ -334,10 +332,10 @@ int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const un
 }
 
 
-int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const unsigned int nrows, const int *xind,
-		const unsigned int xindlen, double *u, double *s) {
+int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nrows, const int *xind,
+		const int xindlen, double *u, double *s) {
 
-	unsigned int cnt, firsttime, itercnt, i, j, k, row, srtrowslen = 0;
+	int cnt, firsttime, itercnt, i, j, k, row, srtrowslen = 0;
 	SCi2tuple *srtrows;
 
 	for (i = 0; i < nrows; ++i) {
@@ -443,10 +441,10 @@ int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const unsign
 }
 
 
-int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const unsigned int nrows,
-		const int *xind, unsigned int xindlen, double *u, double *s, const double zu) {
+int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nrows,
+		const int *xind, int xindlen, double *u, double *s, const double zu) {
 
-	unsigned int cnt, itercnt, i, j, k, row, srtrowslen = 0;
+	int cnt, itercnt, i, j, k, row, srtrowslen = 0;
 	double sdotx, usum, val;
 	SCi2tuple *srtrows;
 
@@ -556,7 +554,7 @@ int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const unsign
 
 
 int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
-		const unsigned int nrows, const unsigned int ncols, const int *xind, unsigned int xindlen, double *dj,
+		const int nrows, const int ncols, const int *xind, int xindlen, double *dj,
 		const double zu, double y, int *rqbeg, int *rqind, int max_branch, int max_singl) {
 
 	int cnt, qnzcnt, qnsingl, i, it, j, jt, k, h, p, sindlen, txindlen, jindlen, mjindlen;

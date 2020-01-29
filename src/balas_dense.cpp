@@ -1,28 +1,26 @@
-#include <cplex.h>
-#include <math.h>
-#include <string.h>
-#include "balas_dense.h"
 
-int SCbalascutprocedure(unsigned char *mat, int nrows, int ncols,
-		unsigned const char *x, double *s, double zu, double y,
+#include "balas_dense.hpp"
+
+int SCbalascutprocedure(char *mat, int nrows, int ncols,
+		const char *x, double *s, double zu, double y,
 		int *cutind) {
 
 	int cnt, i, it, j, jt, off, p = 0;
 	double min, v, v1, v2;
 
 	// init W, J, M_J
-	unsigned char *wset = calloc(ncols, sizeof(unsigned char));
-	unsigned char *qset = malloc(ncols *sizeof(unsigned char));
-	unsigned char *jset = malloc(ncols * sizeof(unsigned char));
-	unsigned char *mjset = malloc(nrows * sizeof(unsigned char));
+	char *wset = (char *) calloc(ncols, sizeof(char));
+	char *qset = (char *) malloc(ncols *sizeof(char));
+	char *jset = (char *) malloc(ncols * sizeof(char));
+	char *mjset = (char *) malloc(nrows * sizeof(char));
 
 	// init set S
-	char *sset = malloc(ncols);
+	char *sset = (char *) malloc(ncols);
 	for (j = ncols; j--; ) {
 		sset[j] = x[j] & (s[j] > 0);
 	}
 
-	unsigned char *txset = malloc(nrows);
+	char *txset = (char *) malloc(nrows);
 	for (i = nrows; i--; ) {
 		cnt = 0;
 		off = ncols * i;
@@ -33,7 +31,7 @@ int SCbalascutprocedure(unsigned char *mat, int nrows, int ncols,
 		txset[i] = (cnt == 1);
 	}
 
-	unsigned char *matr;
+	char *matr;
 
 	while (1) {
 
@@ -134,25 +132,25 @@ int SCbalascutprocedure(unsigned char *mat, int nrows, int ncols,
 }
 
 
-int SCbalasbranchrule1(unsigned char *mat, int nrows, int ncols,
-		unsigned const char *x, double *s, double zu, double y,
-		unsigned char *qmat, int max_branch, int max_singl) {
+int SCbalasbranchrule1(char *mat, int nrows, int ncols,
+		const char *x, double *s, double zu, double y,
+		char *qmat, int max_branch, int max_singl) {
 
-	unsigned char cond;
+	char cond;
 	int cnt, nzcnt, nsingl, i, it, j, jt, off, p = 0;
 	double min, v, v1, v2;
 
 	// init J, M_J
-	unsigned char *jset = malloc(ncols);
-	unsigned char *mjset = malloc(nrows);
+	char *jset = (char *) malloc(ncols);
+	char *mjset = (char *) malloc(nrows);
 
 	// init set S
-	char *sset = malloc(ncols);
+	char *sset = (char *) malloc(ncols);
 	for (j = ncols; j--; ) {
 		sset[j] = (x[j]) && (s[j] > 0);
 	}
 
-	unsigned char *txset = malloc(nrows);
+	char *txset = (char *) malloc(nrows);
 	for (i = nrows; i--; ) {
 		cnt = 0;
 		off = ncols * i;
@@ -163,8 +161,8 @@ int SCbalasbranchrule1(unsigned char *mat, int nrows, int ncols,
 		txset[i] = (cnt == 1);
 	}
 
-	unsigned char *qmatr = qmat;
-	unsigned char *matr;
+	char *qmatr = qmat;
+	char *matr;
 
 	nzcnt = 0;
 	nsingl = 0;
@@ -273,9 +271,9 @@ int SCbalasbranchrule1(unsigned char *mat, int nrows, int ncols,
 }
 
 
-int SCbalasbranchrule1_test(unsigned char *mat, int nrows, int ncols,
-		unsigned const char *x, double *s, double zu, double y,
-		unsigned char *qmat, int max_branch, int max_singl) {
+int SCbalasbranchrule1_test(char *mat, int nrows, int ncols,
+		const char *x, double *s, double zu, double y,
+		char *qmat, int max_branch, int max_singl) {
 
 #if DEBUG_VERBOSITY
 	char append = 'a';
@@ -292,14 +290,14 @@ int SCbalasbranchrule1_test(unsigned char *mat, int nrows, int ncols,
 	if (log != NULL) fprintf(log, "\nSCbalasbranchrule1_test\n");
 #endif
 
-	unsigned char cond;
-	unsigned char *qmatr = qmat;
+	char cond;
+	char *qmatr = qmat;
 	int jt;
-	unsigned int j, p = 0, cnt, nzcnt, nsingl;
+	int j, p = 0, cnt, nzcnt, nsingl;
 	double v;
 
 	// init set S
-	char *sset = malloc(ncols);
+	char *sset = (char *) malloc(ncols);
 	for (j = ncols; j--; ) {
 		sset[j] = x[j] && (s[j] > 0);
 	}
@@ -413,11 +411,11 @@ int SCbalasbranchrule1_test(unsigned char *mat, int nrows, int ncols,
 }
 
 
-int SCprimecover(const unsigned char *mat, unsigned const int nrows,
-        unsigned const int ncols, unsigned char *x) {
+int SCprimecover(const char *mat, const int nrows,
+        const int ncols, char *x) {
 
-    unsigned int i, j, off, removedcnt;
-    unsigned int *matdotx = (unsigned int *) malloc(nrows * sizeof(int));
+    int i, j, off, removedcnt;
+    int *matdotx = (int *) malloc(nrows * sizeof(int));
 
     for (i = 0; i < nrows; ++i) {
         matdotx[i] = 0;
@@ -456,14 +454,14 @@ int SCprimecover(const unsigned char *mat, unsigned const int nrows,
 }
 
 
-int SCoversatrows(unsigned char *mat, unsigned const int nrows,
-		unsigned const int ncols, unsigned char *x, int *xsupp,
-		unsigned int *xsupplen_p) {
+int SCoversatrows(char *mat, const int nrows,
+		const int ncols, char *x, int *xsupp,
+		int *xsupplen_p) {
 
-	unsigned char *matr;
-	unsigned int cnt, i, j, k;
+	char *matr;
+	int cnt, i, j, k;
 
-	unsigned int *matdotx = (unsigned int *) malloc(nrows * sizeof(unsigned int));
+	int *matdotx = (int *) malloc(nrows * sizeof(int));
 	for (i = 0; i < nrows; ++i) {
 		matr = &mat[i*ncols];
 		matdotx[i] = 0;
@@ -495,8 +493,8 @@ int SCoversatrows(unsigned char *mat, unsigned const int nrows,
 }
 
 
-int SCiscover(unsigned char *mat, unsigned const int nrows,
-		unsigned const int ncols, unsigned const char *x) {
+int SCiscover(char *mat, const int nrows,
+		const int ncols, const char *x) {
 
 #if DEBUG_VERBOSITY
 	char append = 'a';
@@ -505,8 +503,8 @@ int SCiscover(unsigned char *mat, unsigned const int nrows,
 	if (log != NULL) fprintf(log, "\nSCiscover\n");
 #endif
 
-	unsigned char *matr;
-	unsigned int i, j, cnt;
+	char *matr;
+	int i, j, cnt;
 
 	for (i = 0; i < nrows; ++i) {
 		cnt = 0;
@@ -537,10 +535,10 @@ int SCiscover(unsigned char *mat, unsigned const int nrows,
 }
 
 
-double SCbalasheurprimal0(unsigned char *mat, const double *obj,
-		unsigned const int nrows, unsigned const int ncols,
-		unsigned char *x, int *xsupp, unsigned int *xsupplen,
-		unsigned const int whichfunc) {
+double SCbalasheurprimal0(char *mat, const double *obj,
+		const int nrows, const int ncols,
+		char *x, int *xsupp, int *xsupplen,
+		const int whichfunc) {
 
 #if DEBUG_VERBOSITY
 	char append = 'a';
@@ -550,10 +548,10 @@ double SCbalasheurprimal0(unsigned char *mat, const double *obj,
 #endif
 
 	int jt, it;
-	unsigned int i, j, cnt, rcnt, cvdrows, rsetsize = nrows, rsetlen = 0;
+	int i, j, cnt, rcnt, cvdrows, rsetsize = nrows, rsetlen = 0;
 	double v, zu;
-	double (*func)(const double, const unsigned int);
-	unsigned char *matr;
+	double (*func)(const double, const int);
+	char *matr;
 
 	switch (whichfunc) {
 		case 1: func = &func1;
@@ -592,7 +590,7 @@ double SCbalasheurprimal0(unsigned char *mat, const double *obj,
 			rset[rsetlen++].b = i;
 
 			if (rsetlen == rsetsize) {
-				rsetsize <<= (unsigned char) 1;
+				rsetsize <<= (char) 1;
 				rset = (SCi2tuple *) realloc(rset, rsetsize * sizeof(SCi2tuple));
 			}
 		} else {
@@ -711,33 +709,33 @@ double SCbalasheurprimal0(unsigned char *mat, const double *obj,
 }
 
 
-double SCbalasheurprimal12(unsigned char *mat, const double *costs,
-		unsigned const int nrows, unsigned const int ncols,
-		unsigned char *x, int *xsupp, unsigned int *xsupplen_p) {
+double SCbalasheurprimal12(char *mat, const double *costs,
+		const int nrows, const int ncols,
+		char *x, int *xsupp, int *xsupplen_p) {
 
-	unsigned char *x1, *x2, *xcp;
+	char *x1, *x2, *xcp;
 	int *xsupp1, *xsupp2, *xsuppcp;
-	unsigned int xsupplen1, xsupplen2, xsupplencp;
+	int xsupplen1, xsupplen2, xsupplencp;
 	double zu, zu1, zu2;
 
 	zu = SCbalasheurprimal0(mat, costs, nrows, ncols, x, xsupp, xsupplen_p, 3);
 
-	x1 = (unsigned char *) malloc(ncols * sizeof(unsigned char));
-	x2 = (unsigned char *) malloc(ncols * sizeof(unsigned char));
-	xcp = (unsigned char *) malloc(ncols * sizeof(unsigned char));
+	x1 = (char *) malloc(ncols * sizeof(char));
+	x2 = (char *) malloc(ncols * sizeof(char));
+	xcp = (char *) malloc(ncols * sizeof(char));
 	xsupp1 = (int *) malloc(ncols * sizeof(int));
 	xsupp2 = (int *) malloc(ncols * sizeof(int));
 	xsuppcp = (int *) malloc(ncols * sizeof(int));
 
 	// First round
-	memcpy(xcp, x, ncols * sizeof(unsigned char));
+	memcpy(xcp, x, ncols * sizeof(char));
 	memcpy(xsuppcp, xsupp, *xsupplen_p * sizeof(int));
 	xsupplencp = *xsupplen_p;
 
 	SCoversatrows(mat, nrows, ncols, x, xsupp, xsupplen_p);
 
-	memcpy(x1, x, ncols * sizeof(unsigned char));
-	memcpy(x2, x, ncols * sizeof(unsigned char));
+	memcpy(x1, x, ncols * sizeof(char));
+	memcpy(x2, x, ncols * sizeof(char));
 	memcpy(xsupp1, xsupp, *xsupplen_p * sizeof(int));
 	memcpy(xsupp2, xsupp, *xsupplen_p * sizeof(int));
 	xsupplen1 = *xsupplen_p;
@@ -746,31 +744,31 @@ double SCbalasheurprimal12(unsigned char *mat, const double *costs,
 	zu2 = SCbalasheurprimal0(mat, costs, nrows, ncols, x2, xsupp2, &xsupplen2, 2);
 	//printf("zu=(%lf %lf %lf) xsupplen=(%d %d %d)\n", zu, zu1, zu2, *xsupplen_p, xsupplen1, xsupplen2);
 	if ((zu1 < zu2) && (zu1 < zu)) {
-		memcpy(x, x1, ncols * sizeof(unsigned char));
+		memcpy(x, x1, ncols * sizeof(char));
 		memcpy(xsupp, xsupp1, xsupplen1 * sizeof(int));
 		*xsupplen_p = xsupplen1;
 		zu = zu1;
 	} else if ((zu2 < zu1) && (zu2 < zu)) {
-		memcpy(x, x2, ncols * sizeof(unsigned char));
+		memcpy(x, x2, ncols * sizeof(char));
 		memcpy(xsupp, xsupp2, xsupplen2 * sizeof(int));
 		*xsupplen_p = xsupplen2;
 		zu = zu2;
 	} else {
-		memcpy(x, xcp, ncols * sizeof(unsigned char));
+		memcpy(x, xcp, ncols * sizeof(char));
 		memcpy(xsupp, xsuppcp, xsupplencp * sizeof(int));
 		*xsupplen_p = xsupplencp;
 	}
 	//printf("len=%d [", *xsupplen_p); for (int i = 0; i < *xsupplen_p; ++i) printf("%d ", xsupp[i]); printf("]\n");
 
 	// Second round
-	memcpy(xcp, x, ncols * sizeof(unsigned char));
+	memcpy(xcp, x, ncols * sizeof(char));
 	memcpy(xsuppcp, xsupp, *xsupplen_p * sizeof(int));
 	xsupplencp = *xsupplen_p;
 
 	SCoversatrows(mat, nrows, ncols, x, xsupp, xsupplen_p);
 
-	memcpy(x1, x, ncols * sizeof(unsigned char));
-	memcpy(x2, x, ncols * sizeof(unsigned char));
+	memcpy(x1, x, ncols * sizeof(char));
+	memcpy(x2, x, ncols * sizeof(char));
 	memcpy(xsupp1, xsupp, *xsupplen_p * sizeof(int));
 	memcpy(xsupp2, xsupp, *xsupplen_p * sizeof(int));
 	xsupplen1 = *xsupplen_p;
@@ -779,17 +777,17 @@ double SCbalasheurprimal12(unsigned char *mat, const double *costs,
 	zu2 = SCbalasheurprimal0(mat, costs, nrows, ncols, x2, xsupp2, &xsupplen2, 5);
 	//printf("zu=(%lf %lf %lf) xsupplen=(%d %d %d)\n", zu, zu1, zu2, *xsupplen_p, xsupplen1, xsupplen2);
 	if ((zu1 < zu2) && (zu1 < zu)) {
-		memcpy(x, x1, ncols * sizeof(unsigned char));
+		memcpy(x, x1, ncols * sizeof(char));
 		memcpy(xsupp, xsupp1, xsupplen1 * sizeof(int));
 		*xsupplen_p = xsupplen1;
 		zu = zu1;
 	} else if ((zu2 < zu1) && (zu2 < zu)) {
-		memcpy(x, x2, ncols * sizeof(unsigned char));
+		memcpy(x, x2, ncols * sizeof(char));
 		memcpy(xsupp, xsupp2, xsupplen2 * sizeof(int));
 		*xsupplen_p = xsupplen2;
 		zu = zu2;
 	} else {
-		memcpy(x, xcp, ncols * sizeof(unsigned char));
+		memcpy(x, xcp, ncols * sizeof(char));
 		memcpy(xsupp, xsuppcp, xsupplencp * sizeof(int));
 		*xsupplen_p = xsupplencp;
 	}
@@ -806,13 +804,13 @@ double SCbalasheurprimal12(unsigned char *mat, const double *costs,
 }
 
 
-double SCbalasheurprimal5b(unsigned char *mat, const double *costs,
-		unsigned const int nrows, unsigned const int ncols, unsigned char *x,
+double SCbalasheurprimal5b(char *mat, const double *costs,
+		const int nrows, const int ncols, char *x,
 		double *u, double *s) {
 
-	unsigned char *matr;
+	char *matr;
 	int *rset;
-	unsigned int cvdrows, cnt, i, it, j, rsetlen = 0, rsetsize = nrows;
+	int cvdrows, cnt, i, it, j, rsetlen = 0, rsetsize = nrows;
 	double v, zu;
 
 	for (j = 0; j < ncols; ++j) {
@@ -901,8 +899,8 @@ double SCbalasheurprimal5b(unsigned char *mat, const double *costs,
 }
 
 
-int SCisdualsolution(const unsigned char *mat, const double *obj,
-		unsigned const int nrows, unsigned const int ncols, double *u) {
+int SCisdualsolution(const char *mat, const double *obj,
+		const int nrows, const int ncols, double *u) {
 
 #if DEBUG_VERBOSITY
 	char append = 'a';
@@ -911,7 +909,7 @@ int SCisdualsolution(const unsigned char *mat, const double *obj,
 	fprintf(log, "\nSCisdualsolution\n");
 #endif
 
-	unsigned int i, j;
+	int i, j;
 	double rowsum;
 
 	for (j = 0; j < ncols; ++j) {
@@ -944,8 +942,8 @@ int SCisdualsolution(const unsigned char *mat, const double *obj,
 }
 
 
-int SCdual0(unsigned const char *mat, double *obj, unsigned const int nrows,
-		unsigned const int ncols, double *u, double *s) {
+int SCdual0(const char *mat, double *obj, const int nrows,
+		const int ncols, double *u, double *s) {
 
 	char cont = 'C', le = 'L';
 	int error, i, j, off;
@@ -996,12 +994,12 @@ int SCdual0(unsigned const char *mat, double *obj, unsigned const int nrows,
 }
 
 
-int SCbalasheurdual1(unsigned char *mat,
-		unsigned const int nrows, unsigned const int ncols,
-		unsigned const char *x, double *u, double *s) {
+int SCbalasheurdual1(char *mat,
+		const int nrows, const int ncols,
+		const char *x, double *u, double *s) {
 
-	unsigned char *matr;
-	unsigned int cnt, rcnt, firsttime, itercnt, i, j, row, srtrowssize = 2, srtrowslen = 0;
+	char *matr;
+	int cnt, rcnt, firsttime, itercnt, i, j, row, srtrowssize = 2, srtrowslen = 0;
 	SCi2tuple *srtrows;
 
 	for (i = 0; i < nrows; ++i) {
@@ -1088,9 +1086,9 @@ int SCbalasheurdual1(unsigned char *mat,
 }
 
 
-int SCbalasheurdual3(unsigned char *mat,
-		unsigned const int nrows, unsigned const int ncols,
-		unsigned const char *x, double *u, double *s, const double zu) {
+int SCbalasheurdual3(char *mat,
+		const int nrows, const int ncols,
+		const char *x, double *u, double *s, const double zu) {
 
 #if DEBUG_VERBOSITY
 	char append = 'a';
@@ -1099,8 +1097,8 @@ int SCbalasheurdual3(unsigned char *mat,
 	if (log != NULL) fprintf(log, "\nSCbalasheurdual3\n");
 #endif
 
-	unsigned char *matr;
-	unsigned int cnt, itercnt, i, j, row, srtrowssize = 2, srtrowslen = 0;
+	char *matr;
+	int cnt, itercnt, i, j, row, srtrowssize = 2, srtrowslen = 0;
 	double sdotx, usum, val;
 	SCi2tuple *srtrows;
 
@@ -1135,7 +1133,7 @@ int SCbalasheurdual3(unsigned char *mat,
 			srtrows[srtrowslen++].b = i;
 
 			if (srtrowslen == srtrowssize) {
-				srtrowssize <<= (unsigned char) 1;
+				srtrowssize <<= (char) 1;
 				srtrows = (SCi2tuple *) realloc(srtrows, srtrowssize * sizeof(SCi2tuple));
 			}
 		}

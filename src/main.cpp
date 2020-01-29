@@ -1,10 +1,11 @@
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "main.h"
-#include "aux.h"
-#include "sc.h"
+#include "main.hpp"
+#include "common.hpp"
+#include "sc.hpp"
 
 int main(int argc, char **argv) {
 

@@ -1,11 +1,9 @@
 
-#include <cplex.h>
-#include <string.h>
-#include "sc.h"
-#include "aux.h"
-#include "callbacks.h"
-#include "balas_dense.h"
-#include "preprocessing.h"
+#include "sc.hpp"
+#include "callbacks.hpp"
+#include "balas_dense.hpp"
+#include "balas_sparse.hpp"
+#include "preprocessing.hpp"
 
 /**	SCMILPsolver: this function reads the model, starts preprocessing routines
  *	and launches the solver selected by arguments (with the chosen configuration).
@@ -165,16 +163,16 @@ int SCMILPsolver(SCinstance *inst) {
     	CPXsetdblparam(env, CPX_PARAM_TILIM, inst->MIP_time_limit);
         CPXmipopt(env, lp);
 
-	} else if (strcmp(inst->solver, "balascuts") == 0) {
-		SCsolverbalascuts(inst, env, lp);
+	/*} else if (strcmp(inst->solver, "balascuts") == 0) {
+		SCsolverbalascuts(inst, env, lp);*/
     } else if (strcmp(inst->solver, "balasbcrule1") == 0) {
         SCsolverbalasrule1(inst, env, lp);
 	} else if (strcmp(inst->solver, "balasbcrule1-test") == 0) {
 		SCsolverbalasrule1_test(inst, env, lp);
 	} else if (strcmp(inst->solver, "balasbcrule1-sparse") == 0) {
 		SCsolverbalasrule1_sparse(inst, env, lp);
-	} else if (strcmp(inst->solver, "balasbcrule1maxcol-sparse") == 0) {
-		SCsolverbalasrule1maxcol_sparse(inst, env, lp);
+	/*} else if (strcmp(inst->solver, "balasbcrule1maxcol-sparse") == 0) {
+		SCsolverbalasrule1maxcol_sparse(inst, env, lp);*/
 	} else if (strcmp(inst->solver, "balasbcrule2") == 0) {
 		SCsolverbalasrule2(inst, env, lp);
 	} else if (strcmp(inst->solver, "maxcol") == 0) {
@@ -218,7 +216,7 @@ int SCMILPsolver(SCinstance *inst) {
 }
 
 
-int SCsolverbalascuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {
+/*int SCsolverbalascuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {
     int status;
 
     inst->nsccols = CPXgetnumcols(env, lp);
@@ -235,8 +233,8 @@ int SCsolverbalascuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {
 
     inst->SC_BALAS_NODE_CUTS_NUM = 10;
 
-    status = CPXsetusercutcallbackfunc(env, SCcallbackbalasusercuts_sparse, inst);
-    if (status) { perror("Unable to set user cuts callback"); goto TERMINATE; }
+	status = CPXsetusercutcallbackfunc(env, SCcallbackbalasusercuts_sparse, inst);
+	if (status) { perror("Unable to set user cuts callback"); goto TERMINATE; }
 
     CPXmipopt(env, lp);
 
@@ -244,7 +242,7 @@ int SCsolverbalascuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {
     free(inst->costs);
 
     return 1;
-}
+}*/
 
 
 int SCsolverbalascuts(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {

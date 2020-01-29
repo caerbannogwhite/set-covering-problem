@@ -1,14 +1,7 @@
-//
-// Created by macs on 19/06/19.
-//
 
-//#include <cblas.h>
-#include <string.h>
-#include <cplex.h>
-#include <math.h>
-#include "callbacks.h"
-#include "aux.h"
-#include "balas_dense.h"
+#include "balas_dense.hpp"
+#include "balas_sparse.hpp"
+#include "callbacks.hpp"
 
 int CPXPUBLIC SCcallbackbalasusercuts_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
         int *useraction_p) {
@@ -245,14 +238,14 @@ int CPXPUBLIC SCcallbackbalasusercuts_sparse(CPXCENVptr env, void *cbdata, int w
 int CPXPUBLIC SCcallbackbalasusercuts(CPXCENVptr env, void *cbdata, int wherefrom,
 		void *cbhandle, int *useraction_p) {
 
-	unsigned char *mat, *xchr;
+	char *mat, *xchr;
 	int ncolsred, nrowsred, ncols, nrows, nodedepth, status = 0;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *xsupp;
-	unsigned int i, j, xsupplen;
+	int i, j, xsupplen;
 	double objval, zu, y;
 	double *dj, *pi, *obj;
 
-	SCinstance *inst = cbhandle;
+	SCinstance *inst = (SCinstance *) cbhandle;
 	CPXLPptr lp;
 
 	// Initialize useraction to indicate no user action taken
@@ -292,7 +285,7 @@ int CPXPUBLIC SCcallbackbalasusercuts(CPXCENVptr env, void *cbdata, int wherefro
 	// Primal
 	xsupplen = 0;
 	xsupp = (int *) malloc(ncolsred * sizeof(int));
-	xchr = (unsigned char *) calloc(ncolsred, sizeof(unsigned char));
+	xchr = (char *) calloc(ncolsred, sizeof(char));
 
 	zu = SCbalasheurprimal0(mat, inst->costs, nrowsred, ncolsred, xchr, xsupp, &xsupplen, 3);
 
@@ -376,14 +369,14 @@ int CPXPUBLIC SCcallbackbalasusercuts(CPXCENVptr env, void *cbdata, int wherefro
 int CPXPUBLIC SCcallbackbalasusercuts_test(CPXCENVptr env, void *cbdata, int wherefrom,
 		void *cbhandle, int *useraction_p) {
 
-	unsigned char *mat, *xchr;
+	char *mat, *xchr;
 	int off, ncolsred, nrowsred, ncols, nrows, nodedepth, status = 0;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *xsupp;
-	unsigned int i, j, xsupplen;
+	int i, j, xsupplen;
 	double objval, zu, y;
 	double *dj, *pi, *obj;
 
-	SCinstance *inst = cbhandle;
+	SCinstance *inst = (SCinstance *)cbhandle;
 	CPXLPptr lp;
 
 	// Initialize useraction to indicate no user action taken
@@ -421,7 +414,7 @@ int CPXPUBLIC SCcallbackbalasusercuts_test(CPXCENVptr env, void *cbdata, int whe
 	}
 
 	// Primal
-	xchr = (unsigned char *) calloc(ncolsred, sizeof(unsigned char));
+	xchr = (char *) calloc(ncolsred, sizeof(char));
 
 	// Dual and reduced costs
 	dj = (double *) malloc(ncolsred * sizeof(double));
@@ -547,10 +540,10 @@ int CPXPUBLIC SCcallbackbranchmaxcol(CPXCENVptr env, void *cbdata,
 	(void) nodeest;
 
 	char flag;
-	unsigned char *mat, *matr;
+	char *mat, *matr;
 	int ncolsred, nrowsred, ncols, nrows, numnz, nzcnt_tmp, surplus, jt, status = 0, seqnum1, seqnum2;
 	int *colsred2sc, *colssc2red, *rmatbeg, *rmatind;
-	unsigned int i, j, k, l, cnt, max;
+	int i, j, k, l, cnt, max;
 	double objval;
 	double *rmatval, *ub, *lb;
 
@@ -602,7 +595,7 @@ int CPXPUBLIC SCcallbackbranchmaxcol(CPXCENVptr env, void *cbdata,
 	}
 	ncolsred = cnt;
 
-	mat = (unsigned char *) calloc(sizeof(unsigned char), (nrows) * (ncolsred));
+	mat = (char *) calloc(sizeof(char), (nrows) * (ncolsred));
 	nrowsred = 0;
 	for (i = 0; i < nrows; ++i) {
 		matr = &mat[(nrowsred) * (ncolsred)];
@@ -691,10 +684,10 @@ int CPXPUBLIC SCcallbackbranchmaxcol2(CPXCENVptr env, void *cbdata,
 	(void) nodeest;
 
 	char flag;
-	unsigned char *mat, *matr, *acc;
+	char *mat, *matr, *acc;
 	int ncolsred, nrowsred, ncols, nrows, numnz, nzcnt_tmp, surplus, jt, status = 0, seqnum1, seqnum2;
 	int *colsred2sc, *colssc2red, *rmatbeg, *rmatind;
-	unsigned int i, j, k, l, cnt, max;
+	int i, j, k, l, cnt, max;
 	double objval;
 	double *rmatval, *ub, *lb;
 
@@ -746,7 +739,7 @@ int CPXPUBLIC SCcallbackbranchmaxcol2(CPXCENVptr env, void *cbdata,
 	}
 	ncolsred = cnt;
 
-	mat = (unsigned char *) calloc(sizeof(unsigned char), (nrows) * (ncolsred));
+	mat = (char *) calloc(sizeof(char), (nrows) * (ncolsred));
 	nrowsred = 0;
 	for (i = 0; i < nrows; ++i) {
 		matr = &mat[(nrowsred) * (ncolsred)];
@@ -781,7 +774,7 @@ int CPXPUBLIC SCcallbackbranchmaxcol2(CPXCENVptr env, void *cbdata,
 	free(rmatind);
 	free(rmatval);
 
-	acc = (unsigned char *) malloc(ncolsred * sizeof(unsigned char));
+	acc = (char *) malloc(ncolsred * sizeof(char));
 	max = 0;
 	jt = -1;
 	for (j = 0; j < ncolsred; ++j) {
@@ -851,11 +844,11 @@ int CPXPUBLIC SCcallbackbranchmaxcol_sparse(CPXCENVptr env, void *cbdata,
 	(void) bd;
 	(void) nodeest;
 
-	unsigned char flag;
+	char flag;
 	int cnt, ncolsred, nrowsred, numnzred, ncols, nrows, numnz, status = 0, seqnum1, seqnum2, nzcnt_tmp, surplus;
 	int brcol;
 	int *colscnt, *rmatind, *rmatbeg, *rmatindred, *rmatbegred, *colssc2red, *colsred2sc;
-	unsigned int i, j, max;
+	int i, j, max;
 	double objval;
 	double *ub, *lb, *rmatval;
 
@@ -1005,16 +998,16 @@ int CPXPUBLIC SCcallbackbranchmaxcoldom(CPXCENVptr env, void *cbdata,
 
 	char integer = 'I', up = 'U', cond;
 	char *senses;
-	unsigned char flag;
-	unsigned char *removedcols;
+	char flag;
+	char *removedcols;
 	int cnt, ncolsred, nrowsred, numnzred, ncols, nrows, numnz, k, status = 0, seqnum1, seqnum2, nzcnt_tmp, surplus, nodedepth;
 	int removedcolscnt, ind, onecolscnt, brcol;
 	int *colscnt, *rmatind, *rmatbeg, *rmatindred, *rmatbegred, *colssc2red, *colsred2sc, *rowssc2red, *rowsred2sc;
-	unsigned int i, j, max;
+	int i, j, max;
 	double objval, zero = 0.0, val, objvalred;
 	double *ub, *lb, *rmatval;
 
-	SCinstance *inst = cbhandle;
+	SCinstance *inst = (SCinstance *)cbhandle;
 	CPXLPptr lp;
 
 	// Initialize useraction to indicate no user action taken
@@ -1117,7 +1110,7 @@ int CPXPUBLIC SCcallbackbranchmaxcoldom(CPXCENVptr env, void *cbdata,
 	free(rmatind);
 
 	removedcolscnt = 0;
-	removedcols = (unsigned char *) calloc(ncolsred, sizeof(unsigned char));
+	removedcols = (char *) calloc(ncolsred, sizeof(char));
 
 	//if (((nrows / 5.0) < nrowsred) && (nrowsred < (nrows / 2.0)) && (ncolsred > (ncols / 2.0)) && (nodedepth < 5)) {
 	if (0) {
@@ -1278,7 +1271,6 @@ int CPXPUBLIC SCcallbackbranchmaxcoldom(CPXCENVptr env, void *cbdata,
 	free(rmatbegred);
 	free(rmatindred);
 
-	TERMINATE:
 	return status;
 } /* END SCcallbackbranchmaxcoldom */
 
@@ -1299,17 +1291,17 @@ int CPXPUBLIC SCcallbackbalasbranchrule1v1(CPXCENVptr env, void *cbdata,
 	(void) bd;
 	(void) nodeest;
 
-	unsigned char *mat, *qmat, *qmatred, *xchr;
+	char *mat, *qmat, *qmatred, *xchr;
 	int ncolsred, nrowsred, ncols, nrows, p, nodedepth, status = 0, seqnum;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *xsupp;
-	unsigned int i, j, xsupplen;
+	int i, j, xsupplen;
 	double objval, zu, y;
 	double *dj, *pi, *obj;
 
-	SCinstance *inst = cbhandle;
+	SCinstance *inst = (SCinstance *)cbhandle;
 	CPXLPptr lp;
 
-	int (*branchfunc)(CPXCENVptr env, void *cbdata, int wherefrom, double objval, unsigned char *qmat,
+	int (*branchfunc)(CPXCENVptr env, void *cbdata, int wherefrom, double objval, char *qmat,
 			int p, int ncols, int q, SCinstance *inst) = &SCmakebalasbranchrule1v1;
 
 	// Initialize useraction to indicate no user action taken
@@ -1363,7 +1355,7 @@ int CPXPUBLIC SCcallbackbalasbranchrule1v1(CPXCENVptr env, void *cbdata,
 	// Primal
 	xsupplen = 0;
 	xsupp = (int *) malloc(ncolsred * sizeof(int));
-	xchr = (unsigned char *) calloc(ncolsred, sizeof(unsigned char));
+	xchr = (char *) calloc(ncolsred, sizeof(char));
 
 	zu = SCbalasheurprimal0(mat, inst->costs, nrowsred, ncolsred, xchr, xsupp, &xsupplen, 3);
 
@@ -1412,8 +1404,8 @@ int CPXPUBLIC SCcallbackbalasbranchrule1v1(CPXCENVptr env, void *cbdata,
 		goto TERMINATE;
 	}
 
-	qmatred = (unsigned char *) calloc(sizeof(unsigned char), (inst->SC_BALAS_MAX_BRANCH) * ncolsred);
-	qmat = (unsigned char *) calloc(sizeof(unsigned char), (inst->SC_BALAS_MAX_BRANCH) * ncols);
+	qmatred = (char *) calloc(sizeof(char), (inst->SC_BALAS_MAX_BRANCH) * ncolsred);
+	qmat = (char *) calloc(sizeof(char), (inst->SC_BALAS_MAX_BRANCH) * ncols);
 
 	y = 0;
 	for (i = 0; i < nrowsred; ++i) {
@@ -1473,17 +1465,17 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_test(CPXCENVptr env, void *cbdata,
 	(void) bd;
 	(void) nodeest;
 
-	unsigned char *mat, *qmat, *qmatred, *xchr;
+	char *mat, *qmat, *qmatred, *xchr;
 	int off, ncolsred, nrowsred, ncols, nrows, p, nodedepth, status = 0, seqnum;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *xsupp;
-	unsigned int i, j, k, xsupplen;
+	int i, j, xsupplen;
 	double objval, zu, y;
 	double *dj, *pi, *obj;
 
-	SCinstance *inst = cbhandle;
+	SCinstance *inst = (SCinstance *)cbhandle;
 	CPXLPptr lp;
 
-	int (*branchfunc)(CPXCENVptr env, void *cbdata, int wherefrom, double objval, unsigned char *qmat,
+	int (*branchfunc)(CPXCENVptr env, void *cbdata, int wherefrom, double objval, char *qmat,
 			int p, int ncols, int q, SCinstance *inst) = &SCmakebalasbranchrule1v1;
 
 	// Initialize useraction to indicate no user action taken
@@ -1536,7 +1528,7 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_test(CPXCENVptr env, void *cbdata,
 	}
 
 	// Primal
-	xchr = (unsigned char *) calloc(ncolsred, sizeof(unsigned char));
+	xchr = (char *) calloc(ncolsred, sizeof(char));
 
 	// Dual and reduced costs
 	dj = (double *) malloc(ncolsred * sizeof(double));
@@ -1618,8 +1610,8 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_test(CPXCENVptr env, void *cbdata,
 		goto TERMINATE;
 	}
 
-	qmatred = (unsigned char *) calloc(sizeof(unsigned char), (inst->SC_BALAS_MAX_BRANCH) * ncolsred);
-	qmat = (unsigned char *) calloc(sizeof(unsigned char), (inst->SC_BALAS_MAX_BRANCH) * ncols);
+	qmatred = (char *) calloc(sizeof(char), (inst->SC_BALAS_MAX_BRANCH) * ncolsred);
+	qmat = (char *) calloc(sizeof(char), (inst->SC_BALAS_MAX_BRANCH) * ncols);
 
 	//p = SCbalasbranchrule1(mat, nrowsred, ncolsred, xchr, dj, zu, y, qmatred, inst->SC_BALAS_MAX_BRANCH, inst->SC_BALAS_MAX_SINGL);
 	p = SCbalasbranchrule1_test(mat, nrowsred, ncolsred, xchr, dj, zu, y, qmatred, inst->SC_BALAS_MAX_BRANCH, inst->SC_BALAS_MAX_SINGL);
@@ -1681,11 +1673,11 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_sparse(CPXCENVptr env, void *cbdata,
 	int ncolsred, nrowsred, ncols, nrows, p, nodedepth, status = 0, seqnum, numnz, numnzred, nzcnt_tmp, surplus, cnt;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *item, *xind;
 	int *rmatind, *rmatindred, *rmatbeg, *rmatbegred, *cmatbegred, *cmatindred, *rqbeg, *rqind;
-	unsigned int i, j, k, xindlen;
+	int i, j, xindlen;
 	double objval, zu, y;
 	double *dj, *pi, *objred, *ub, *lb, *rmatval, *incumbent;
 
-	SCinstance *inst = cbhandle;
+	SCinstance *inst = (SCinstance *)cbhandle;
 	CPXLPptr lp;
 
 	int (*branchfunc)(CPXCENVptr env, void *cbdata, int wherefrom, double objval, int *rqbeg, int *rqind,
@@ -1989,11 +1981,11 @@ int CPXPUBLIC SCcallbackbalasbranchrule1maxcol_sparse(CPXCENVptr env, void *cbda
 	int ncolsred, nrowsred, ncols, nrows, p, nodedepth, status = 0, seqnum, numnz, numnzred, nzcnt_tmp, surplus, cnt;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *item, *xind;
 	int *rmatind, *rmatindred, *rmatbeg, *rmatbegred, *cmatbegred, *cmatindred, *rqbeg, *rqind, *colscnt;
-	unsigned int i, j, k, xindlen;
+	int i, j, xindlen;
 	double objval, zu, y;
 	double *dj, *pi, *objred, *ub, *lb, *rmatval, *incumbent;
 
-	SCinstance *inst = cbhandle;
+	SCinstance *inst = (SCinstance *)cbhandle;
 	CPXLPptr lp;
 
 	int (*branchfunc)(CPXCENVptr env, void *cbdata, int wherefrom, double objval, int *rqbeg, int *rqind,
@@ -2340,11 +2332,10 @@ int CPXPUBLIC SCcallbackbalasbranchrule2(CPXCENVptr env, void *cbdata,
 	int min, max, it, ht, nbrvars, seqnum1, seqnum2;
 	int *colsred2sc, *colssc2red;
 	int *rmatind, *rmatindred, *rmatbeg, *rmatbegred, *varind;
-	unsigned int i, j, k;
+	int i, j, k;
 	double objval;
 	double *ub, *lb, *rmatval, *varbd;
 
-	SCinstance *inst = cbhandle;
 	CPXLPptr lp;
 
 	// Initialize useraction to indicate no user action taken
@@ -2577,15 +2568,15 @@ int CPXPUBLIC SCcallbackbalasbranchrule2(CPXCENVptr env, void *cbdata,
 } /* END SCcallbackbalasbranchrule2 */
 
 
-unsigned char *SCgetmatrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
+char *SCgetmatrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
 		int *rowssc2red, int *colsred2sc, int *colssc2red, int *nrowsred,
 		int *ncolsred) {
 
-	unsigned char flag;
-	unsigned char *mat, *matr;
+	char flag;
+	char *mat, *matr;
 	int cnt, nrows, ncols, numnz, status, nzcnt_tmp, surplus;
 	int *rmatbeg, *rmatind;
-	unsigned int i, j, k, l;
+	int i, j, k, l;
 	double *ub, *lb, *rmatval;
 
 	ncols = CPXgetnumcols(env, lp);
@@ -2620,7 +2611,7 @@ unsigned char *SCgetmatrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
 	}
 	*ncolsred = cnt;
 
-	mat = (unsigned char *) calloc(sizeof(unsigned char), (nrows) * (*ncolsred));
+	mat = (char *) calloc(sizeof(char), (nrows) * (*ncolsred));
 	*nrowsred = 0;
 	for (i = 0; i < nrows; ++i) {
 		matr = &mat[(*nrowsred) * (*ncolsred)];
@@ -2691,10 +2682,10 @@ int SCmakecplexbranch(CPXCENVptr env, void *cbdata, int wherefrom,
 
 
 int SCmakebalasbranchrule1v1(CPXCENVptr env, void *cbdata, int wherefrom,
-		double objval, unsigned char *qmat, int p, int ncols, int q,
+		double objval, char *qmat, int p, int ncols, int q,
 		SCinstance *inst) {
 	char *varlu;
-	unsigned int i, j, nbrvars, off;
+	int i, j, nbrvars, off;
 	int * varind;
 	double *varbd;
 
@@ -2821,10 +2812,10 @@ int SCmakebalasbranchrule1v1(CPXCENVptr env, void *cbdata, int wherefrom,
 
 
 int SCmakebalasbranchrule1v2(CPXCENVptr env, void *cbdata, int wherefrom,
-		double objval, unsigned char *qmat, int p, int ncols, int q,
+		double objval, char *qmat, int p, int ncols, int q,
 		SCinstance *inst) {
 	char *varlu;
-	unsigned int i, j, nbrvars, off;
+	int i, j, nbrvars, off;
 	int * varind;
 	double *varbd;
 
@@ -2910,15 +2901,15 @@ int SCmakebalasbranchrule1v2(CPXCENVptr env, void *cbdata, int wherefrom,
 
 
 int SCmakebalasbranchrule2(CPXCENVptr env, void *cbdata, int wherefrom,
-		double objval, unsigned char *mat, unsigned int nrows, unsigned int ncols,
+		double objval, char *mat, int nrows, int ncols,
 		const int *colsred2sc, SCinstance *inst) {
 
 	char cond, flag;
 	char *varlu;
-	unsigned char *matr, *mati;
+	char *matr, *mati;
 	int it, ht, status;
 	int *varindsc, *varindred;
-	unsigned int cnt, nzrowcnt, i, j, max, min, nbrvars;
+	int cnt, nzrowcnt, i, j, max, min, nbrvars;
 	double *varbd;
 
 	max = 0;
@@ -3037,7 +3028,7 @@ int SCmakebalasbranchrule1v1_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
 
 	char *varlu;
 	int nzcnt, status = 0;
-	unsigned int i, j;
+	int i, j;
 	double *varbd;
 
 	double rhs[1] = {1.0};
