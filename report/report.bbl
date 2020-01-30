@@ -1,0 +1,94 @@
+\begin{thebibliography}{10}
+
+\bibitem{Balas1980-CuttinPlanes}
+Egon Balas.
+\newblock {\em Cutting planes from conditional bounds: A new approach to set
+  covering}, pages 19--36.
+\newblock Springer Berlin Heidelberg, Berlin, Heidelberg, 1980.
+
+\bibitem{Balas1980-Computational}
+Egon Balas and Andrew Ho.
+\newblock {\em Set covering algorithms using cutting planes, heuristics, and
+  subgradient optimization: A computational study}, pages 37--60.
+\newblock Springer Berlin Heidelberg, Berlin, Heidelberg, 1980.
+
+\bibitem{Beasley90}
+J.~E. Beasley.
+\newblock A lagrangian heuristic for set-covering problems.
+\newblock {\em Naval Research Logistics (NRL)}, 37(1):151--164, 1990.
+
+\bibitem{OR-Lib}
+J.~E. Beasley.
+\newblock Or-library, 1990.
+
+\bibitem{NetworkAttack}
+M.~Bellmore, H.~J. Geenberg, and J.~J. Jarvis.
+\newblock Multi-commodity disconnecting sets.
+\newblock {\em Management Science}, 16(6):B--427--B--433, 1970.
+
+\bibitem{NetworkDefense}
+Mandell Bellmore and H.~Donald Ratliff.
+\newblock Optimal defense of multi-commodity networks.
+\newblock {\em Management Science}, 18(4):B174--B185, 1971.
+
+\bibitem{BellmoreRatliff1971}
+Mandell Bellmore and H.~Donald Ratliff.
+\newblock Set covering and involutory bases.
+\newblock {\em Management Science}, 18(3):194--206, 1971.
+
+\bibitem{FischettiSCP}
+Alberto Caprara and Matteo Fischetti.
+\newblock A heuristic method for the set covering problem.
+\newblock {\em Operations Research}, 47, 02 2000.
+
+\bibitem{SetCoveringGreedy}
+Graham Cormode, Howard Karloff, and Anthony Wirth.
+\newblock Set cover algorithms for very large datasets.
+\newblock In {\em Proceedings of the 19th ACM International Conference on
+  Information and Knowledge Management}, CIKM '10, pages 479--488, New York,
+  NY, USA, 2010. ACM.
+
+\bibitem{Dantzig1959}
+G.~B. Dantzig and J.~H. Ramser.
+\newblock The truck dispatching problem.
+\newblock {\em Manage. Sci.}, 6(1):80--91, October 1959.
+
+\bibitem{OptimalExtractingDataStorage}
+Richard~H. Day.
+\newblock On optimal extracting from a multiple file data storage system: An
+  application of integer programming.
+\newblock {\em Operations Research}, 13(3):482--494, 1965.
+
+\bibitem{SolvingSeymour}
+Michael Ferris.
+\newblock Solving the seymour problem.
+\newblock 2001.
+
+\bibitem{FischettiLezioni}
+Matteo Fischetti.
+\newblock {\em Lezioni di Ricerca Operativa}.
+\newblock Libreria Progetto, Padova, 1995.
+
+\bibitem{CPLEX}
+Ibm.
+\newblock {\em IBM ILOG CPLEX Optimization Studio CPLEX User's Manual}, 2011.
+
+\bibitem{Kar72}
+R.~Karp.
+\newblock Reducibility among combinatorial problems.
+\newblock In R.~Miller and J.~Thatcher, editors, {\em Complexity of Computer
+  Computations}, pages 85--103. Plenum Press, 1972.
+
+\bibitem{PadbergRinaldi}
+Manfred Padberg and Giovanni Rinaldi.
+\newblock A branch-and-cut algorithm for the resolution of large-scale
+  symmetric traveling salesman problems.
+\newblock {\em SIAM Rev.}, 33(1):60--100, February 1991.
+
+\bibitem{Python}
+G.~van Rossum.
+\newblock Python tutorial.
+\newblock Technical Report CS-R9526, Centrum voor Wiskunde en Informatica
+  (CWI), Amsterdam, May 1995.
+
+\end{thebibliography}

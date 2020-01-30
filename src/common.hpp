@@ -16,29 +16,30 @@
 using namespace std;
 namespace po = boost::program_options;
 
-#define DEBUG_VERBOSITY				0
+#define DEBUG_VERBOSITY 0
 
-#define SC_EPSILON_MED				1e-5
-#define SC_EPSILON_SMALL			1e-10
-#define BIG_M                   	1e20
+#define SC_EPSILON_MED 1e-5
+#define SC_EPSILON_SMALL 1e-10
+#define BIG_M 1e20
 
-#define SC_ERR_NOT_COVER			1
-#define SC_ERR_NOT_PRIME_COVER		11
-#define SC_ERR_NOT_DUAL_SOL			12
-#define SC_ERR_PRIMAL				2
-#define SC_ERR_DUAL					3
-#define SC_ERR_DUAL_3				31
-#define SC_ERR_CPXDUAL_0			32
-#define SC_ERR_BALAS_COND_VIOLATED	40
-#define SC_ERR_BALAS_BRANCH_RULE_1	41
+#define SC_ERR_NOT_COVER 1
+#define SC_ERR_NOT_PRIME_COVER 11
+#define SC_ERR_NOT_DUAL_SOL 12
+#define SC_ERR_PRIMAL 2
+#define SC_ERR_DUAL 3
+#define SC_ERR_DUAL_3 31
+#define SC_ERR_CPXDUAL_0 32
+#define SC_ERR_BALAS_COND_VIOLATED 40
+#define SC_ERR_BALAS_BRANCH_RULE_1 41
 
 // data structures
-typedef struct SCinstance {
+typedef struct SCinstance
+{
 
     // input data
-    char presolver[100];
-    char solver[100];
-    char instance_name[100];
+    string presolver;
+    string solver;
+    string instance_name;
     int nscrows;
     int nsccols;
     double *costs;
@@ -70,12 +71,12 @@ typedef struct SCinstance {
     double time_solver;
     double time_total;
 
-    char debug;
+    bool debug;
 
 } SCinstance;
 
-
-typedef struct SCnodedata {
+typedef struct SCnodedata
+{
     int ncols;
     int q;
     int p;
@@ -85,25 +86,24 @@ typedef struct SCnodedata {
     int *rqind;
 } SCnodedata;
 
-
-typedef struct SCi2tuple {
+typedef struct SCi2tuple
+{
     int a;
     int b;
 } SCi2tuple;
 
-
-typedef struct SCi3tuple {
-	int a;
-	int b;
-	int c;
+typedef struct SCi3tuple
+{
+    int a;
+    int b;
+    int c;
 } SCi3tuple;
 
-
-typedef struct SCidtuple {
-	int a;
-	double b;
+typedef struct SCidtuple
+{
+    int a;
+    double b;
 } SCidtuple;
-
 
 int SCint_cmp(const void *p, const void *q);
 int SCi2tuple_cmpa(const void *p, const void *q);
