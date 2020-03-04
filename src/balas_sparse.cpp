@@ -2,31 +2,37 @@
 #include "balas_sparse.hpp"
 
 int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg,
-		const int *cmatind, const int nrows, const int ncols, int *xind,
-		const int xindlen) {
+						const int *cmatind, const int nrows, const int ncols, int *xind,
+						const int xindlen)
+{
 
 	char flag;
 	int i, j, k, removedcnt;
-	int *matdotx = (int *) malloc(nrows * sizeof(int));
+	int *matdotx = (int *)malloc(nrows * sizeof(int));
 
-	for (i = 0; i < nrows; ++i) {
+	for (i = 0; i < nrows; ++i)
+	{
 		matdotx[i] = 0;
 		j = rmatbeg[i];
 		k = 0;
-		while ((j < rmatbeg[i+1]) && (k < xindlen)) {
-			if (rmatind[j] == xind[k]) {
+		while ((j < rmatbeg[i + 1]) && (k < xindlen))
+		{
+			if (rmatind[j] == xind[k])
+			{
 				matdotx[i]++;
 				j++;
 				k++;
 				continue;
 			}
 
-			if (rmatind[j] < xind[k]) {
+			if (rmatind[j] < xind[k])
+			{
 				j++;
 				continue;
 			}
 
-			if (rmatind[j] > xind[k]) {
+			if (rmatind[j] > xind[k])
+			{
 				k++;
 				continue;
 			}
@@ -34,17 +40,22 @@ int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatb
 	}
 
 	removedcnt = 0;
-	for (j = xindlen - 1; j > 0; --j) {
+	for (j = xindlen - 1; j > 0; --j)
+	{
 		flag = 1;
-		for (k = cmatbeg[xind[j]]; k < cmatbeg[xind[j] + 1]; ++k) {
-			if (matdotx[cmatind[k]] < 2) {
+		for (k = cmatbeg[xind[j]]; k < cmatbeg[xind[j] + 1]; ++k)
+		{
+			if (matdotx[cmatind[k]] < 2)
+			{
 				flag = 0;
 				break;
 			}
 		}
 
-		if (flag) {
-			for (k = cmatbeg[xind[j]]; k < cmatbeg[xind[j] + 1]; ++k) {
+		if (flag)
+		{
+			for (k = cmatbeg[xind[j]]; k < cmatbeg[xind[j] + 1]; ++k)
+			{
 				matdotx[cmatind[k]]--;
 			}
 
@@ -57,10 +68,10 @@ int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatb
 	return removedcnt;
 }
 
-
 double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
-		const double *obj, const int nrows, const int ncols, int *xind, int *xindlen,
-		const int whichfunc) {
+								 const double *obj, const int nrows, const int ncols, int *xind, int *xindlen,
+								 const int whichfunc)
+{
 
 	char flag;
 	int jt, it;
@@ -70,19 +81,26 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 	double (*func)(const double, const int);
 	SCi2tuple *rsettup;
 
-	switch (whichfunc) {
-		case 1: func = &func1;
-			break;
-		case 2: func = &func2;
-			break;
-		case 3: func = &func3;
-			break;
-		case 4: func = &func4;
-			break;
-		case 5: func = &func5;
-			break;
-		default: func = &func3;
-			break;
+	switch (whichfunc)
+	{
+	case 1:
+		func = &func1;
+		break;
+	case 2:
+		func = &func2;
+		break;
+	case 3:
+		func = &func3;
+		break;
+	case 4:
+		func = &func4;
+		break;
+	case 5:
+		func = &func5;
+		break;
+	default:
+		func = &func3;
+		break;
 	}
 
 	/*cmatbeg = (int *) malloc((ncols + 1) * sizeof(int));
@@ -102,50 +120,63 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 	cmatbeg[ncols] = cnt;*/
 
 	zu = 0.0;
-	rset = (int *) malloc(nrows * sizeof(int));
-	rsetnew = (int *) malloc(nrows * sizeof(int));
-	rsettup = (SCi2tuple *) malloc(nrows * sizeof(SCi2tuple));
+	rset = (int *)malloc(nrows * sizeof(int));
+	rsetnew = (int *)malloc(nrows * sizeof(int));
+	rsettup = (SCi2tuple *)malloc(nrows * sizeof(SCi2tuple));
 
 	rsetlen = 0;
 	cvdrows = 0;
 
-	if ((*xindlen) > 0) {
-		for (j = 0; j < (*xindlen); ++j) {
+	if ((*xindlen) > 0)
+	{
+		for (j = 0; j < (*xindlen); ++j)
+		{
 			zu += obj[xind[j]];
 		}
 
-		for (i = 0; i < nrows; ++i) {
+		for (i = 0; i < nrows; ++i)
+		{
 
 			flag = 0;
 			j = 0;
 			k = rmatbeg[i];
-			while ((j < (*xindlen)) && (k < rmatbeg[i + 1])) {
-				if (xind[j] == rmatind[k]) {
+			while ((j < (*xindlen)) && (k < rmatbeg[i + 1]))
+			{
+				if (xind[j] == rmatind[k])
+				{
 					flag = 1;
 					break;
 				}
 
-				if (xind[j] < rmatind[k]) {
+				if (xind[j] < rmatind[k])
+				{
 					j++;
 					continue;
 				}
 
-				if (xind[j] > rmatind[k]) {
+				if (xind[j] > rmatind[k])
+				{
 					k++;
 					continue;
 				}
 			}
 
-			if (!flag) {
+			if (!flag)
+			{
 				rsettup[rsetlen].a = rmatbeg[i + 1] - rmatbeg[i];
 				rsettup[rsetlen].b = i;
 				rsetlen++;
-			} else {
+			}
+			else
+			{
 				cvdrows++;
 			}
 		}
-	} else {
-		for (i = 0; i < nrows; ++i) {
+	}
+	else
+	{
+		for (i = 0; i < nrows; ++i)
+		{
 			rsettup[i].a = rmatbeg[i + 1] - rmatbeg[i];
 			rsettup[i].b = i;
 		}
@@ -153,39 +184,48 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 	}
 
 	qsort(rsettup, rsetlen, sizeof(SCi2tuple), SCi2tuple_cmpa);
-	for (i = 0; i < rsetlen; ++i) {
+	for (i = 0; i < rsetlen; ++i)
+	{
 		rset[i] = rsettup[i].b;
 	}
 
 	free(rsettup);
 
-	while (cvdrows < nrows) {
+	while (cvdrows < nrows)
+	{
 
 		it = rset[0];
 
 		v = INFINITY;
 		jt = -1;
-		for (j = 0; j < ncols; ++j) {
+		for (j = 0; j < ncols; ++j)
+		{
 
 			flag = 0;
 			cnt = 0;
-			for (i = 0; i < rsetlen; ++i) {
-				if (rset[i] != -1) {
-					item = (int *) bsearch(&rset[i], &cmatind[cmatbeg[j]], cmatbeg[j+1] - cmatbeg[j], sizeof(int), SCint_cmp);
-					if (item != NULL) {
+			for (i = 0; i < rsetlen; ++i)
+			{
+				if (rset[i] != -1)
+				{
+					item = (int *)bsearch(&rset[i], &cmatind[cmatbeg[j]], cmatbeg[j + 1] - cmatbeg[j], sizeof(int), SCint_cmp);
+					if (item != NULL)
+					{
 						cnt++;
-						if (rset[i] == it) {
+						if (rset[i] == it)
+						{
 							flag = 1;
 						}
 					}
 				}
 			}
 
-			if (!flag) {
+			if (!flag)
+			{
 				continue;
 			}
 
-			if (func(obj[j], cnt) < v) {
+			if (func(obj[j], cnt) < v)
+			{
 				v = func(obj[j], cnt);
 				jt = j;
 			}
@@ -201,12 +241,16 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 		zu += obj[jt];
 
 		cnt = 0;
-		for (i = 0; i < rsetlen; ++i) {
-			item = (int *) bsearch(&rset[i], &cmatind[cmatbeg[jt]], cmatbeg[jt+1] - cmatbeg[jt], sizeof(int), SCint_cmp);
-			if (item == NULL) {
+		for (i = 0; i < rsetlen; ++i)
+		{
+			item = (int *)bsearch(&rset[i], &cmatind[cmatbeg[jt]], cmatbeg[jt + 1] - cmatbeg[jt], sizeof(int), SCint_cmp);
+			if (item == NULL)
+			{
 				rsetnew[cnt] = rset[i];
 				cnt++;
-			} else {
+			}
+			else
+			{
 				cvdrows++;
 			}
 		}
@@ -221,11 +265,13 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 	// Make the cover a prime cover
 	SCprimecover_sparse(rmatbeg, rmatind, cmatbeg, cmatind, nrows, ncols, xind, *xindlen);
 
-	for (i = 0; i < *xindlen; ++i) {
-		if (xind[i] == -1) {
+	for (i = 0; i < *xindlen; ++i)
+	{
+		if (xind[i] == -1)
+		{
 			zu -= obj[xind[i]];
 			*xindlen = *xindlen - 1;
-			memcpy(&xind[i], &xind[i+1], (*xindlen) * sizeof(int));
+			memcpy(&xind[i], &xind[i + 1], (*xindlen) * sizeof(int));
 			i--;
 		}
 	}
@@ -235,26 +281,28 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 	return zu;
 }
 
-
 int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const int nrows,
-		const int ncols, double *u, double *s) {
+				   const int ncols, double *u, double *s)
+{
 
 	char le = 'L';
 	int error, i, j, nzcnt, status;
 	double *cmatval;
 
 	nzcnt = rmatbeg[nrows];
-	cmatval = (double *) malloc(nzcnt * sizeof(double));
-	for (i = 0; i < nzcnt; ++i) {
+	cmatval = (double *)malloc(nzcnt * sizeof(double));
+	for (i = 0; i < nzcnt; ++i)
+	{
 		cmatval[i] = 1.0;
 	}
 
 	CPXENVptr env = CPXopenCPLEX(&error);
 	CPXLPptr lp = CPXcreateprob(env, &error, "dual");
 
-	CPXaddcols(env, lp, (int) nrows, nzcnt, cmatval, rmatbeg, rmatind, cmatval, NULL, NULL, NULL);
+	CPXaddcols(env, lp, (int)nrows, nzcnt, cmatval, rmatbeg, rmatind, cmatval, NULL, NULL, NULL);
 
-	for (j = 0; j < ncols; ++j) {
+	for (j = 0; j < ncols; ++j)
+	{
 		CPXnewrows(env, lp, 1, &obj[j], &le, NULL, NULL);
 	}
 
@@ -263,18 +311,27 @@ int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const in
 	CPXchgprobtype(env, lp, CPXPROB_LP);
 
 	status = CPXlpopt(env, lp);
-	if (status) { printf("SCdual0_sparse - CPXmipopt error: %d\n", status); }
+	if (status)
+	{
+		printf("SCdual0_sparse - CPXmipopt error: %d\n", status);
+	}
 
 	// Dual vector
-	status = CPXgetx(env, lp, u, 0, (int) (nrows - 1));
-	if (status) { printf("SCdual0_sparse - CPXgetx error: %d\n", status); }
+	status = CPXgetx(env, lp, u, 0, (int)(nrows - 1));
+	if (status)
+	{
+		printf("SCdual0_sparse - CPXgetx error: %d\n", status);
+	}
 
-	for (j = 0; j < ncols; ++j) {
+	for (j = 0; j < ncols; ++j)
+	{
 		s[j] = obj[j];
 	}
 
-	for (i = 0; i < nrows; ++i) {
-		for (j = rmatbeg[i]; j < rmatbeg[i+1]; ++j) {
+	for (i = 0; i < nrows; ++i)
+	{
+		for (j = rmatbeg[i]; j < rmatbeg[i + 1]; ++j)
+		{
 			s[rmatind[j]] -= u[i];
 		}
 	}
@@ -331,19 +388,21 @@ int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const in
 	return 0;
 }
 
-
 int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nrows, const int *xind,
-		const int xindlen, double *u, double *s) {
+							const int xindlen, double *u, double *s)
+{
 
 	int cnt, firsttime, itercnt, i, j, k, row, srtrowslen = 0;
 	SCi2tuple *srtrows;
 
-	for (i = 0; i < nrows; ++i) {
+	for (i = 0; i < nrows; ++i)
+	{
 		u[i] = 0.0;
 	}
 
-	srtrows = (SCi2tuple *) malloc(nrows * sizeof(SCi2tuple));
-	for (i = 0; i < nrows; ++i) {
+	srtrows = (SCi2tuple *)malloc(nrows * sizeof(SCi2tuple));
+	for (i = 0; i < nrows; ++i)
+	{
 
 		// No need to generate R and T(x) sets: cnt says how
 		// much a row is covered and if cnt < 1 (minimum
@@ -351,27 +410,32 @@ int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nr
 		cnt = 0;
 		j = rmatbeg[i];
 		k = 0;
-		while (j < rmatbeg[i+1] && k < xindlen) {
-			if (rmatind[j] == xind[k]) {
+		while (j < rmatbeg[i + 1] && k < xindlen)
+		{
+			if (rmatind[j] == xind[k])
+			{
 				cnt++;
 				j++;
 				k++;
 				continue;
 			}
 
-			if (rmatind[j] < xind[k]) {
+			if (rmatind[j] < xind[k])
+			{
 				j++;
 				continue;
 			}
 
-			if (rmatind[j] > xind[k]) {
+			if (rmatind[j] > xind[k])
+			{
 				k++;
 				continue;
 			}
 		}
 
-		if (cnt == 1) {
-			srtrows[srtrowslen].a = rmatbeg[i+1] - rmatbeg[i];
+		if (cnt == 1)
+		{
+			srtrows[srtrowslen].a = rmatbeg[i + 1] - rmatbeg[i];
 			srtrows[srtrowslen++].b = i;
 		}
 	}
@@ -381,26 +445,31 @@ int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nr
 	itercnt = 0;
 	firsttime = 1;
 
-	while (itercnt < srtrowslen) {
+	while (itercnt < srtrowslen)
+	{
 
 		row = srtrows[itercnt++].b;
 
 		u[row] = INFINITY;
-		for (j = rmatbeg[row]; j < rmatbeg[row + 1]; ++j) {
+		for (j = rmatbeg[row]; j < rmatbeg[row + 1]; ++j)
+		{
 			u[row] = (s[rmatind[j]] < u[row]) ? s[rmatind[j]] : u[row];
 		}
 
-		for (j = rmatbeg[row]; j < rmatbeg[row + 1]; ++j) {
+		for (j = rmatbeg[row]; j < rmatbeg[row + 1]; ++j)
+		{
 			s[rmatind[j]] -= u[row];
 		}
 
-		if ((itercnt == srtrowslen) && firsttime) {
+		if ((itercnt == srtrowslen) && firsttime)
+		{
 
 			itercnt = 0;
 			firsttime = 0;
 			srtrowslen = 0;
 
-			for (i = 0; i < nrows; ++i) {
+			for (i = 0; i < nrows; ++i)
+			{
 
 				// No need to generate R and T(x) sets: cnt says how
 				// much a row is covered and if cnt < 1 (minimum
@@ -408,27 +477,32 @@ int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nr
 				cnt = 0;
 				j = rmatbeg[i];
 				k = 0;
-				while (j < rmatbeg[i+1] && k < xindlen) {
-					if (rmatind[j] == xind[k]) {
+				while (j < rmatbeg[i + 1] && k < xindlen)
+				{
+					if (rmatind[j] == xind[k])
+					{
 						cnt++;
 						j++;
 						k++;
 						continue;
 					}
 
-					if (rmatind[j] < xind[k]) {
+					if (rmatind[j] < xind[k])
+					{
 						j++;
 						continue;
 					}
 
-					if (rmatind[j] > xind[k]) {
+					if (rmatind[j] > xind[k])
+					{
 						k++;
 						continue;
 					}
 				}
 
-				if (cnt > 1) {
-					srtrows[srtrowslen].a = rmatbeg[i+1] - rmatbeg[i];
+				if (cnt > 1)
+				{
+					srtrows[srtrowslen].a = rmatbeg[i + 1] - rmatbeg[i];
 					srtrows[srtrowslen++].b = i;
 				}
 			}
@@ -440,30 +514,34 @@ int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nr
 	return 0;
 }
 
-
 int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nrows,
-		const int *xind, int xindlen, double *u, double *s, const double zu) {
+							const int *xind, int xindlen, double *u, double *s, const double zu)
+{
 
 	int cnt, itercnt, i, j, k, row, srtrowslen = 0;
 	double sdotx, usum, val;
 	SCi2tuple *srtrows;
 
 	sdotx = 0.0;
-	for (j = 0; j < xindlen; ++j) {
+	for (j = 0; j < xindlen; ++j)
+	{
 		sdotx += s[xind[j]];
 	}
 
 	usum = 0.0;
-	for (i = 0; i < nrows; ++i) {
+	for (i = 0; i < nrows; ++i)
+	{
 		usum += u[i];
 	}
 
-	if (sdotx >= (zu - usum)) {
+	if (sdotx >= (zu - usum))
+	{
 		goto TERMINATE;
 	}
 
-	srtrows = (SCi2tuple *) malloc(nrows * sizeof(SCi2tuple));
-	for (i = 0; i < nrows; ++i) {
+	srtrows = (SCi2tuple *)malloc(nrows * sizeof(SCi2tuple));
+	for (i = 0; i < nrows; ++i)
+	{
 
 		// No need to generate R and T(x) sets: cnt says how
 		// much a row is covered and if cnt < 1 (minimum
@@ -471,32 +549,38 @@ int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nr
 		cnt = 0;
 		j = rmatbeg[i];
 		k = 0;
-		while (j < rmatbeg[i+1] && k < xindlen) {
-			if (rmatind[j] == xind[k]) {
+		while (j < rmatbeg[i + 1] && k < xindlen)
+		{
+			if (rmatind[j] == xind[k])
+			{
 				cnt++;
 				j++;
 				k++;
 				continue;
 			}
 
-			if (rmatind[j] < xind[k]) {
+			if (rmatind[j] < xind[k])
+			{
 				j++;
 				continue;
 			}
 
-			if (rmatind[j] > xind[k]) {
+			if (rmatind[j] > xind[k])
+			{
 				k++;
 				continue;
 			}
 		}
 
-		if ((u[i] > SC_EPSILON_SMALL) && (cnt > 1)) {
+		if ((u[i] > SC_EPSILON_SMALL) && (cnt > 1))
+		{
 			srtrows[srtrowslen].a = cnt;
 			srtrows[srtrowslen++].b = i;
 		}
 	}
 
-	if (srtrowslen == 0) {
+	if (srtrowslen == 0)
+	{
 		free(srtrows);
 		return 0;
 	}
@@ -504,9 +588,11 @@ int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nr
 	qsort(srtrows, srtrowslen, sizeof(SCi2tuple), SCi2tuple_cmpa);
 
 	itercnt = 0;
-	while (sdotx < (zu - usum - SC_EPSILON_SMALL)) {
+	while (sdotx < (zu - usum - SC_EPSILON_SMALL))
+	{
 
-		if (itercnt == srtrowslen) {
+		if (itercnt == srtrowslen)
+		{
 			free(srtrows);
 			return -1;
 		}
@@ -516,8 +602,10 @@ int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nr
 		val = u[row];
 		j = rmatbeg[row];
 		k = 0;
-		while (j < rmatbeg[row+1] && k < xindlen) {
-			if (rmatind[j] == xind[k]) {
+		while (j < rmatbeg[row + 1] && k < xindlen)
+		{
+			if (rmatind[j] == xind[k])
+			{
 				s[rmatind[j]] += val;
 				sdotx += val;
 				j++;
@@ -525,19 +613,22 @@ int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nr
 				continue;
 			}
 
-			if (rmatind[j] < xind[k]) {
+			if (rmatind[j] < xind[k])
+			{
 				s[rmatind[j]] += val;
 				j++;
 				continue;
 			}
 
-			if (rmatind[j] > xind[k]) {
+			if (rmatind[j] > xind[k])
+			{
 				k++;
 				continue;
 			}
 		}
 
-		while (j < rmatbeg[row+1]) {
+		while (j < rmatbeg[row + 1])
+		{
 			s[rmatind[j]] += val;
 			j++;
 		}
@@ -552,24 +643,26 @@ int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nr
 	return 0;
 }
 
-
 int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
-		const int nrows, const int ncols, const int *xind, int xindlen, double *dj,
-		const double zu, double y, int *rqbeg, int *rqind, int max_branch, int max_singl) {
+							  const int nrows, const int ncols, const int *xind, int xindlen, double *dj,
+							  const double zu, double y, int *rqbeg, int *rqind, int max_branch, int max_singl)
+{
 
 	int cnt, qnzcnt, qnsingl, i, it, j, jt, k, h, p, sindlen, txindlen, jindlen, mjindlen;
 	int *sind, *txind, *jind, *mjind, *tmp;
 	double min, v, v1, v2;
 
-	jind = (int *) malloc(xindlen * sizeof(int));
-	mjind = (int *) malloc(nrows * sizeof(int));
-	tmp = (int *) malloc((nrows > xindlen ? nrows : xindlen) * sizeof(int));
+	jind = (int *)malloc(xindlen * sizeof(int));
+	mjind = (int *)malloc(nrows * sizeof(int));
+	tmp = (int *)malloc((nrows > xindlen ? nrows : xindlen) * sizeof(int));
 
 	// S set defined with column indices
 	sindlen = 0;
-	sind = (int *) malloc(xindlen * sizeof(int));
-	for (j = 0; j < xindlen; ++j) {
-		if (dj[xind[j]] > SC_EPSILON_SMALL) {
+	sind = (int *)malloc(xindlen * sizeof(int));
+	for (j = 0; j < xindlen; ++j)
+	{
+		if (dj[xind[j]] > SC_EPSILON_SMALL)
+		{
 			sind[sindlen] = xind[j];
 			sindlen++;
 		}
@@ -577,36 +670,43 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 
 	// Tx set defined with row indices
 	txindlen = 0;
-	txind = (int *) malloc(nrows * sizeof(int));
-	for (i = 0; i < nrows; ++i) {
+	txind = (int *)malloc(nrows * sizeof(int));
+	for (i = 0; i < nrows; ++i)
+	{
 
 		cnt = 0;
 		j = rmatbeg[i];
 		k = 0;
-		while (j < rmatbeg[i+1] && k < xindlen) {
-			if (cnt > 1) {
+		while (j < rmatbeg[i + 1] && k < xindlen)
+		{
+			if (cnt > 1)
+			{
 				break;
 			}
 
-			if (rmatind[j] == xind[k]) {
+			if (rmatind[j] == xind[k])
+			{
 				cnt++;
 				j++;
 				k++;
 				continue;
 			}
 
-			if (rmatind[j] < xind[k]) {
+			if (rmatind[j] < xind[k])
+			{
 				j++;
 				continue;
 			}
 
-			if (rmatind[j] > xind[k]) {
+			if (rmatind[j] > xind[k])
+			{
 				k++;
 				continue;
 			}
 		}
 
-		if (cnt == 1) {
+		if (cnt == 1)
+		{
 			txind[txindlen] = i;
 			txindlen++;
 		}
@@ -615,12 +715,14 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 	p = 0;
 	qnzcnt = 0;
 	qnsingl = 0;
-	while (1) {
+	while (1)
+	{
 
 		v1 = -INFINITY;
 		v2 = INFINITY;
 
-		for (j = 0; j < sindlen; ++j) {
+		for (j = 0; j < sindlen; ++j)
+		{
 			v1 = (dj[sind[j]] > v1) ? dj[sind[j]] : v1;
 			v2 = (dj[sind[j]] >= zu - y) && (dj[sind[j]] < v2) ? dj[sind[j]] : v2;
 		}
@@ -629,8 +731,10 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 
 		// fill J
 		jindlen = 0;
-		for (j = 0; j < sindlen; ++j) {
-			if ((v - dj[sind[j]]) < SC_EPSILON_SMALL) {
+		for (j = 0; j < sindlen; ++j)
+		{
+			if ((v - dj[sind[j]]) < SC_EPSILON_SMALL)
+			{
 				jind[jindlen] = sind[j];
 				jindlen++;
 			}
@@ -638,18 +742,23 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 
 		// fill M_J
 		mjindlen = 0;
-		for (i = 0; i < nrows; ++i) {
+		for (i = 0; i < nrows; ++i)
+		{
 			tmp[i] = 0;
 		}
 
-		for (j = 0; j < jindlen; ++j) {
-			for (i = cmatbeg[jind[j]]; i < cmatbeg[jind[j] + 1]; ++i) {
+		for (j = 0; j < jindlen; ++j)
+		{
+			for (i = cmatbeg[jind[j]]; i < cmatbeg[jind[j] + 1]; ++i)
+			{
 				tmp[cmatind[i]] = 1;
 			}
 		}
 
-		for (i = 0; i < nrows; ++i) {
-			if(tmp[i]) {
+		for (i = 0; i < nrows; ++i)
+		{
+			if (tmp[i])
+			{
 				mjind[mjindlen] = i;
 				mjindlen++;
 			}
@@ -660,47 +769,56 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 
 		// fill Q_p
 		rqbeg[p] = qnzcnt;
-		for (j = 0; j < ncols; ++j) {
+		for (j = 0; j < ncols; ++j)
+		{
 			rqind[qnzcnt] = j * (dj[j] >= v);
 			qnzcnt += (dj[j] >= v);
 		}
-		rqbeg[p+1] = qnzcnt;
+		rqbeg[p + 1] = qnzcnt;
 
 		it = -1;
 		min = INFINITY;
 		i = 0;
 		h = 0;
-		while (i < txindlen && h < mjindlen) {
-			if (txind[i] == mjind[h]) {
+		while (i < txindlen && h < mjindlen)
+		{
+			if (txind[i] == mjind[h])
+			{
 
 				cnt = 0;
 				j = rmatbeg[txind[i]];
 				k = rqbeg[p];
-				while (j < rmatbeg[txind[i] + 1] && k < rqbeg[p+1]) {
-					if (rmatind[j] == rqind[k]) {
+				while (j < rmatbeg[txind[i] + 1] && k < rqbeg[p + 1])
+				{
+					if (rmatind[j] == rqind[k])
+					{
 						j++;
 						k++;
 						continue;
 					}
 
-					if (rmatind[j] < rqind[k]) {
+					if (rmatind[j] < rqind[k])
+					{
 						cnt++;
 						j++;
 						continue;
 					}
 
-					if (rmatind[j] > rqind[k]) {
+					if (rmatind[j] > rqind[k])
+					{
 						k++;
 						continue;
 					}
 				}
 
-				while (j < rmatbeg[txind[i] + 1]) {
+				while (j < rmatbeg[txind[i] + 1])
+				{
 					cnt++;
 					j++;
 				}
 
-				if (cnt < min) {
+				if (cnt < min)
+				{
 					min = cnt;
 					it = txind[i];
 				}
@@ -710,12 +828,14 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 				continue;
 			}
 
-			if (txind[i] < mjind[h]) {
+			if (txind[i] < mjind[h])
+			{
 				i++;
 				continue;
 			}
 
-			if (txind[i] > mjind[h]) {
+			if (txind[i] > mjind[h])
+			{
 				h++;
 				continue;
 			}
@@ -724,18 +844,22 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 		jt = -1;
 		j = 0;
 		k = rmatbeg[it];
-		while (j < jindlen && k < rmatbeg[it+1]) {
-			if (jind[j] == rmatind[k]) {
+		while (j < jindlen && k < rmatbeg[it + 1])
+		{
+			if (jind[j] == rmatind[k])
+			{
 				jt = jind[j];
 				break;
 			}
 
-			if (jind[j] < rmatind[k]) {
+			if (jind[j] < rmatind[k])
+			{
 				j++;
 				continue;
 			}
 
-			if (jind[j] > rmatind[k]) {
+			if (jind[j] > rmatind[k])
+			{
 				k++;
 				continue;
 			}
@@ -750,8 +874,10 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 		cnt = 0;
 		j = rmatbeg[it];
 		k = rqbeg[p];
-		while (j < rmatbeg[it+1] && k < rqbeg[p+1]) {
-			if (rmatind[j] == rqind[k]) {
+		while (j < rmatbeg[it + 1] && k < rqbeg[p + 1])
+		{
+			if (rmatind[j] == rqind[k])
+			{
 				tmp[cnt] = rmatind[j];
 
 				cnt++;
@@ -760,46 +886,54 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 				continue;
 			}
 
-			if (rmatind[j] < rqind[k]) {
+			if (rmatind[j] < rqind[k])
+			{
 				j++;
 				continue;
 			}
 
-			if (rmatind[j] > rqind[k]) {
+			if (rmatind[j] > rqind[k])
+			{
 				k++;
 				continue;
 			}
 		}
 
-		for (j = 0; j < cnt; ++j) {
+		for (j = 0; j < cnt; ++j)
+		{
 			rqind[rqbeg[p] + j] = tmp[j];
 		}
-		qnzcnt = qnzcnt - (rqbeg[p+1] - rqbeg[p]) + cnt;
-		rqbeg[p+1] = rqbeg[p] + cnt;
+		qnzcnt = qnzcnt - (rqbeg[p + 1] - rqbeg[p]) + cnt;
+		rqbeg[p + 1] = rqbeg[p] + cnt;
 
 		qnsingl += (cnt == 1);
 
 		// check
-		if ((y + SC_EPSILON_SMALL < zu) && (p+1 >= max_branch)) {
+		if ((y + SC_EPSILON_SMALL < zu) && (p + 1 >= max_branch))
+		{
 			p = -1;
 			//printf("max branch reached\n");
 			break;
 		}
-		if ((y + SC_EPSILON_SMALL < zu) && (qnsingl >= max_singl)) {
+		if ((y + SC_EPSILON_SMALL < zu) && (qnsingl >= max_singl))
+		{
 			p = -1;
 			//printf("max singl num reached\n");
 			break;
 		}
-		if (y + SC_EPSILON_SMALL >= zu) {
+		if (y + SC_EPSILON_SMALL >= zu)
+		{
 			p++;
 			//printf("OK!\n");
 			break;
 		}
 
-		for (j = 0; j < sindlen; ++j) {
-			if (sind[j] == jt) {
+		for (j = 0; j < sindlen; ++j)
+		{
+			if (sind[j] == jt)
+			{
 				sindlen--;
-				memcpy(&sind[j], &sind[j+1], (sindlen - j) * sizeof(int));
+				memcpy(&sind[j], &sind[j + 1], (sindlen - j) * sizeof(int));
 				break;
 			}
 		}
@@ -813,7 +947,8 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 	free(mjind);
 	free(tmp);
 
-	if (p < 0) {
+	if (p < 0)
+	{
 		return p;
 	}
 	return (qnzcnt > p * log2(p)) ? p : -1;

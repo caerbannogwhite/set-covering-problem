@@ -2,77 +2,84 @@
 #ifndef SC_COMMON_H
 #define SC_COMMON_H
 
-#include <boost/program_options.hpp>
-#include <cplex.h>
-#include <cpxconst.h>
+#include <ilcplex/ilocplex.h>
+#include <fstream>
 #include <iostream>
-#include <math.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <string>
 #include <time.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/io.hpp>
+#include <boost/program_options.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
+namespace ublas = boost::numeric::ublas;
 
 #define DEBUG_VERBOSITY 0
 
 #define SC_EPSILON_MED 1e-5
-#define SC_EPSILON_SMALL 1e-10
+#define SC_EPSILON_SMALL 1e-12
 #define BIG_M 1e20
 
-#define SC_ERR_NOT_COVER 1
-#define SC_ERR_NOT_PRIME_COVER 11
-#define SC_ERR_NOT_DUAL_SOL 12
-#define SC_ERR_PRIMAL 2
-#define SC_ERR_DUAL 3
-#define SC_ERR_DUAL_3 31
-#define SC_ERR_CPXDUAL_0 32
-#define SC_ERR_BALAS_COND_VIOLATED 40
-#define SC_ERR_BALAS_BRANCH_RULE_1 41
+typedef enum CODES
+{
+    SC_SUCCESFULL,
+    SC_GENERIC_ERROR,
+    SC_ERR_NOT_COVER,
+    SC_ERR_NOT_PRIME_COVER,
+    SC_ERR_NOT_DUAL_SOL,
+    SC_ERR_PRIMAL,
+    SC_ERR_DUAL,
+    SC_ERR_DUAL_3,
+    SC_ERR_CPXDUAL_0,
+    SC_ERR_BALAS_COND_VIOLATED,
+    SC_ERR_BALAS_BRANCH_RULE_1,
+};
 
 // data structures
 typedef struct SCinstance
 {
-
     // input data
     string presolver;
     string solver;
-    string instance_name;
-    int nscrows;
-    int nsccols;
-    double *costs;
+    string inputFilePath;
+
+    ublas::vector<double> obj;
+    ublas::matrix<double> dnsmat;
 
     // CPLEX parameters
-    int random_seed;
-    int num_threads;
-    int verbosity;
-    int MIP_nodesel;
-    int MIP_varsel;
-    int MIP_reduce_prob;
-    double MIP_time_limit;
-    double MIP_cuts_factor;
+    int randomSeed;
+    int numThreads;
+    int verbosityLevel;
+    int mipNodesel;
+    int mipVarsel;
+    int mipReduceProb;
+    double mipTimeLimit;
+    double mipCutsFactor;
 
     // other
-    double best_obj_val;
-    double obj_val;
+    double bestObjVal;
+    double objVal;
 
     // balas branch callback
-    int cplexnodecnt;
-    int balasnodecnt;
-    int SC_BRANCHCB_NBRVARS;
-    int SC_BALAS_MAX_BRANCH;
-    int SC_BALAS_MAX_SINGL;
-    int SC_BALAS_NODE_CUTS_NUM;
+    int cplexCntNode;
+    int balasCntCode;
+    int scBranchCallNumVars;
+    int scBalasMaxBranch;
+    int scBalasMaxSingl;
+    int scBalasNodeNumCuts;
 
-    double time_presolver;
-    double time_build;
-    double time_solver;
-    double time_total;
+    double timePresolver;
+    double timeBuild;
+    double timeSolver;
+    double timeTotal;
 
     bool debug;
-
 } SCinstance;
 
 typedef struct SCnodedata
@@ -85,37 +92,5 @@ typedef struct SCnodedata
     int *rqbeg;
     int *rqind;
 } SCnodedata;
-
-typedef struct SCi2tuple
-{
-    int a;
-    int b;
-} SCi2tuple;
-
-typedef struct SCi3tuple
-{
-    int a;
-    int b;
-    int c;
-} SCi3tuple;
-
-typedef struct SCidtuple
-{
-    int a;
-    double b;
-} SCidtuple;
-
-int SCint_cmp(const void *p, const void *q);
-int SCi2tuple_cmpa(const void *p, const void *q);
-int SCi2tuple_cmparev(const void *p, const void *q);
-int SCi3tuple_cmpa(const void *p, const void *q);
-int SCi3tuple_cmparev(const void *p, const void *q);
-int SCidtuple_cmpb(const void *p, const void *q);
-
-double func1(double c, int k);
-double func2(double c, int k);
-double func3(double c, int k);
-double func4(double c, int k);
-double func5(double c, int k);
 
 #endif //SC_COMMON_H

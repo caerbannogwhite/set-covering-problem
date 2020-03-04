@@ -2,13 +2,13 @@
 #include "main.hpp"
 #include "sc.hpp"
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 
 	SCinstance inst;
 
-	main_initialization(&inst);
-	if (main_read_params(&inst, argc, argv))
+	main_initialization(inst);
+	if (main_read_params(inst, argc, argv))
 	{
 		cout << "Type --help to display available options." << endl;
 		return 0;
@@ -19,48 +19,53 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-// Initialize all configuration variables in SCinstance for computation
-int main_initialization(SCinstance *inst)
+/** Initialize all configuration variables in SCinstance.
+ * 
+ * @param inst - SCinstance
+ * @return a code
+ */
+int main_initialization(SCinstance &inst)
 {
+	inst.mipNodesel = CPX_NODESEL_BESTBOUND;
+	inst.mipVarsel = CPX_VARSEL_DEFAULT;
+	inst.mipReduceProb = 1;
 
-	inst->nscrows = -1;
-	inst->nsccols = -1;
-	inst->costs = NULL;
+	inst.bestObjVal = 0;
+	inst.objVal = 0;
 
-	inst->MIP_nodesel = CPX_NODESEL_BESTBOUND;
-	inst->MIP_varsel = CPX_VARSEL_DEFAULT;
-	inst->MIP_reduce_prob = 1;
+	inst.timePresolver = 0;
+	inst.timeSolver = 0;
+	inst.timeTotal = 0;
 
-	inst->best_obj_val = 0;
-	inst->obj_val = 0;
-
-	inst->time_presolver = 0;
-	inst->time_solver = 0;
-	inst->time_total = 0;
-
-	return 0;
+	return SC_SUCCESFULL;
 }
 
-// Scan arguments and set configuration paramentes
-int main_read_params(SCinstance *inst, int argc, char **argv)
+/** Scan arguments and set configuration paramentes.
+ * 
+ * @param inst - SCinstance
+ * @param argc - the length of the argv array
+ * @param argv - the input arguments array
+ * @return a code
+ */
+int main_read_params(SCinstance &inst, int argc, char *argv[])
 {
 	try
 	{
 		po::options_description desc("Allowed options");
 		desc.add_options()
 		("help", "produce help message")
-		("presolver", po::value<string>(&inst->presolver)->default_value("none"), "set presolver, options: 'none' (default), 'cplex', 'dominance'")
-		("solver", po::value<string>(&inst->solver)->default_value("cplex"), "set solver, options: 'cplex' (default), 'balasbcrule1', 'balasbcrule1-sparse', 'balasbcrule2', 'maxcol', 'maxcol2', 'maxcol-sparse'")
-		("inputFile", po::value<string>(&inst->instance_name), "set input file path")
-		("verbosity", po::value<int>(&inst->verbosity)->default_value(2), "set verbosity level")
-		("numThreads", po::value<int>(&inst->num_threads)->default_value(1), "set number of threads")
-		("timeLimit", po::value<double>(&inst->MIP_time_limit)->default_value(DBL_MAX), "set solver time limit (s)")
-		("branchNum", po::value<int>(&inst->SC_BRANCHCB_NBRVARS)->default_value(2), "set number of branching variables")
-		("maxBranch", po::value<int>(&inst->SC_BALAS_MAX_BRANCH)->default_value(8), "set maximum number of Balas nodes")
-		("maxSingl", po::value<int>(&inst->SC_BALAS_MAX_SINGL)->default_value(2), "set maximum number of singletons in Balas")
-		("cutsFactor", po::value<double>(&inst->MIP_cuts_factor)->default_value(-1.0), "set the MIP cuts factor level")
-		("seed", po::value<int>(&inst->random_seed)->default_value(0), "set random seed")
-		("debug", po::value<bool>(&inst->debug)->default_value(false), "set debug mode");
+		("presolver", po::value<string>(&inst.presolver)->default_value("none"), "set presolver, options: 'none' (default), 'cplex', 'dominance'")
+		("solver", po::value<string>(&inst.solver)->default_value("cplex"), "set solver, options: 'cplex' (default), 'balasbcrule1', 'balasbcrule1-sparse', 'balasbcrule2', 'maxcol', 'maxcol2', 'maxcol-sparse'")
+		("inputFile", po::value<string>(&inst.inputFilePath), "set input file path")
+		("verbosity", po::value<int>(&inst.verbosityLevel)->default_value(2), "set verbosity level")
+		("numThreads", po::value<int>(&inst.numThreads)->default_value(1), "set number of threads")
+		("timeLimit", po::value<double>(&inst.mipTimeLimit)->default_value(DBL_MAX), "set solver time limit (s)")
+		("branchNum", po::value<int>(&inst.scBranchCallNumVars)->default_value(2), "set number of branching variables")
+		("maxBranch", po::value<int>(&inst.scBalasMaxBranch)->default_value(8), "set maximum number of Balas nodes")
+		("maxSingl", po::value<int>(&inst.scBalasMaxSingl)->default_value(2), "set maximum number of singletons in Balas")
+		("cutsFactor", po::value<double>(&inst.mipCutsFactor)->default_value(-1.0), "set the MIP cuts factor level")
+		("seed", po::value<int>(&inst.randomSeed)->default_value(0), "set random seed")
+		("debug", po::value<bool>(&inst.debug)->default_value(false), "set debug mode");
 
 		po::variables_map vm;
 		po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -87,7 +92,7 @@ int main_read_params(SCinstance *inst, int argc, char **argv)
 		else
 		{
 			cout << "Input file path not set. Exiting.\n";
-			return 1;
+			return SC_GENERIC_ERROR;
 		}
 		if (vm.count("verbosity"))
 		{
@@ -129,13 +134,84 @@ int main_read_params(SCinstance *inst, int argc, char **argv)
 	catch (exception &e)
 	{
 		cerr << "error: " << e.what() << "\n";
-		return 1;
+		return SC_GENERIC_ERROR;
 	}
 	catch (...)
 	{
 		cerr << "Exception of unknown type!\n";
-		return 1;
+		return SC_GENERIC_ERROR;
 	}
 
-	return 0;
+	return SC_SUCCESFULL;
+}
+
+/**
+ * Read a Set Covering Problem instance at inst.inputFile
+ * and represent it as a dense matrix.
+ *
+ * @param inst - SCinstance
+ * @returns a code
+ */
+int main_read_instance_dns(SCinstance &inst)
+{
+	int m, n, i, j, nz, col;
+	std::ifstream fileHandler;
+	fileHandler.open(inst.inputFilePath);
+
+	// read number of rows and columns
+	fileHandler >> m >> n;
+
+	inst.obj = ublas::vector<double>(n);
+	inst.dnsmat = ublas::matrix<double>(m, n);
+
+	// read objective values
+	for (auto it = inst.obj.begin(); it != inst.obj.end(); ++it)
+	{
+		fileHandler >> *it;
+	}
+
+	// read matrix ones
+	for (i = 0; i < m; ++i)
+	{
+		fileHandler >> nz;
+		for (j = 0; j < nz; ++j)
+		{
+			fileHandler >> col;
+			inst.dnsmat(i, col) = 1.0;
+		}
+	}
+	fileHandler.close();
+
+	// DEBUG: print this instance
+	std::cout << "obj = ";
+	for (auto it = inst.obj.cbegin(); it != inst.obj.cend(); ++it)
+	{
+		std::cout << *it << " ";
+	}
+	std::cout << std::endl;
+
+	std::cout << "mat = " << std::endl;
+	for (auto it = inst.dnsmat.cbegin1(); it != inst.dnsmat.cend1(); ++it)
+	{
+		for (auto jt = it.cbegin(); jt != it.cend(); ++jt)
+		{
+			std::cout << *jt << " ";
+		}
+		std::cout << std::endl;
+	}
+
+	return SC_SUCCESFULL;
+}
+
+/**
+ * Read a Set Covering Problem instance at inst.inputFile
+ * and represent it as a sparse matrix.
+ *
+ * @param &inst - SCinstance
+ * @returns code
+ */
+int main_read_instance_spr(SCinstance &inst)
+{
+
+	return SC_SUCCESFULL;
 }
