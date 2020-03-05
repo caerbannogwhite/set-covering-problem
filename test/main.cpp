@@ -4,34 +4,56 @@
 
 int main()
 {
-    ublas::matrix<double> mat = ublas::matrix<double>(4, 4);
-    ublas::vector<double> obj = ublas::vector<double>(4);
-    ublas::vector<double> x = ublas::vector<double>(4);
+    std::vector<int> xSupp;
 
-    mat(0, 0) = 1;
-    mat(0, 1) = 1;
-    mat(0, 3) = 1;
-    mat(1, 0) = 1;
-    mat(1, 2) = 1;
-    mat(2, 3) = 1;
-    mat(3, 2) = 1;
-    mat(3, 3) = 1;
+    arma::mat mat = arma::mat(4, 4);
+    arma::vec obj = arma::vec(4);
+    arma::vec x = arma::vec(4);
 
-    obj(0) = 1;
-    obj(1) = 1;
-    obj(2) = 1;
-    obj(3) = 2;
+    mat(0, 0) = 1.0;
+    mat(0, 1) = 1.0;
+    mat(0, 3) = 1.0;
+    mat(1, 1) = 1.0;
+    mat(1, 2) = 1.0;
+    mat(2, 0) = 1.0;
+    mat(2, 2) = 1.0;
+    mat(2, 3) = 1.0;
+    mat(3, 0) = 1.0;
+    mat(3, 3) = 1.0;
 
-    x(0) = 1;
-    x(1) = 1;
-    x(2) = 1;
-    x(3) = 1;
+    obj(0) = 1.0;
+    obj(1) = 1.0;
+    obj(2) = 1.0;
+    obj(3) = 2.0;
 
-    std::cout << "x = " << x << std::endl;
-    std::cout << baldns_is_cover(mat, x) << std::endl;
-    baldns_make_prime_cover(mat, x);
-    std::cout << "x = " << x << std::endl;
-    std::cout << baldns_is_cover(mat, x) << std::endl;
+    x(0) = 1.0;
+    x(1) = 1.0;
+    x(2) = 1.0;
+    x(3) = 1.0;
+
+    std::cout << "mat = " << std::endl;
+    std::cout << mat << std::endl;
+
+    std::cout << "obj = " << std::endl;
+    std::cout << obj << std::endl;
+    std::cout << "x = " << std::endl;
+    std::cout << x << std::endl;
+
+    std::cout << "is x cover = " << baldns_is_cover(mat, x) << std::endl;
+    std::cout << "removed cols = " << baldns_make_prime_cover(mat, x) << std::endl;
+
+    std::cout << "x = " << std::endl;
+    std::cout << x << std::endl;
+
+    x = arma::vec(4);
+
+    std::cout << "score = " << baldns_heur_primal_0(mat, obj, x, xSupp, 3) << std::endl;
+
+    std::cout << "x = " << std::endl;
+    std::cout << x << std::endl;
+
+    std::cout << "mat . x = " << std::endl;
+    std::cout << mat * x << std::endl;
 
     return 0;
 }

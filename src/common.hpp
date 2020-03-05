@@ -10,15 +10,12 @@
 #include <string>
 #include <time.h>
 
+#include <armadillo>
 #include <boost/algorithm/string.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/io.hpp>
 #include <boost/program_options.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
-namespace ublas = boost::numeric::ublas;
 
 #define DEBUG_VERBOSITY 0
 
@@ -49,8 +46,8 @@ typedef struct SCinstance
     string solver;
     string inputFilePath;
 
-    ublas::vector<double> obj;
-    ublas::matrix<double> dnsmat;
+    arma::vec obj;
+    arma::mat dnsmat;
 
     // CPLEX parameters
     int randomSeed;

@@ -6,25 +6,25 @@
  * return the number of removed columns
  * from x (to make x a prime cover).
  * 
- * @param mat - ublas::matrix<double> a SCP matrix
- * @param x - ublas::vector<double> a SCP solution
+ * @param mat - arma::mat a SCP matrix
+ * @param x - arma::vec a SCP solution
  * @return the number of removed columns from x
  */
-int baldns_make_prime_cover(const ublas::matrix<double> &mat, ublas::vector<double> &x)
+int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 {
     int cntRemoved;
     size_t i, j;
 
-    std::unique_ptr<ublas::vector<double>> matDotX (new ublas::vector<double>(mat.size1()));
-    *matDotX = ublas::prod(mat, x);
+    std::unique_ptr<arma::vec> matDotX (new arma::vec(mat.n_rows));
+    *matDotX = mat * x;
 
     cntRemoved = 0;
-    for (j = mat.size2(); j--;)
+    for (j = mat.n_cols; j--;)
     {
         if (x(j) > SC_EPSILON_SMALL)
         {
             x(j) = 0.0;
-            for (i = 0; i < mat.size1(); ++i)
+            for (i = 0; i < mat.n_rows; ++i)
             {
                 if ((mat(i, j) > SC_EPSILON_SMALL) && ((*matDotX)(i) < 2.0))
                 {
@@ -36,7 +36,7 @@ int baldns_make_prime_cover(const ublas::matrix<double> &mat, ublas::vector<doub
             if (x(j) < SC_EPSILON_SMALL)
             {
                 cntRemoved++;
-                (*matDotX) -= ublas::column(mat, j);
+                (*matDotX) -= mat.col(j);
             }
         }
     }
@@ -48,18 +48,19 @@ int baldns_make_prime_cover(const ublas::matrix<double> &mat, ublas::vector<doub
  * Given a SCP dense matrix mat and a solution vector x,
  * return true if x is a cover for mat, false otherwise.
  * 
- * @param mat - ublas::matrix<double> SCP matrix
- * @param x - ublas::vector<double> a SCP solution vector
+ * @param mat - arma::mat SCP matrix
+ * @param x - arma::vec a SCP solution vector
  * @return true if x covers mat, false otherwise
  */
-bool baldns_is_cover(const ublas::matrix<double> &mat, const ublas::vector<double> &x)
+bool baldns_is_cover(const arma::mat &mat, arma::vec &x)
 {
     bool flag;
-    std::unique_ptr<ublas::vector<double>> res(new ublas::vector<double>(mat.size1()));
-    *res = ublas::prod(mat, x);
+
+    std::unique_ptr<arma::vec> matDotX(new arma::vec(mat.n_rows));
+    *matDotX = mat * x;
 
     flag = true;
-    for (auto it = (*res).cbegin(); it != (*res).cend(); ++it)
+    for (auto it = (*matDotX).cbegin(); it != (*matDotX).cend(); ++it)
     {
         if (*it < 1.0)
         {
@@ -75,15 +76,15 @@ bool baldns_is_cover(const ublas::matrix<double> &mat, const ublas::vector<doubl
  * planes, heuristics, and subgradient optimization: a computational study"
  * by Egon Balas and Andrew Ho - Carnegie-Mellon University, Pittsburgh, PA, U.S.A.
  * 
- * @param mat - ublas::matrix<double> SCP matrix
- * @param obj - ublas::vector<double> SCP objective values
- * @param x - ublas::vector<double> a solution for the SCP
+ * @param mat - arma::mat SCP matrix
+ * @param obj - arma::vec SCP objective values
+ * @param x - arma::vec a solution for the SCP
  * @param xSupp - 
  * @param whichFunc - select function for heuristic
  * @return the value of the best primal solution found
  */
-double baldns_heur_primal_0(const ublas::matrix<double> &mat, const ublas::vector<double> &obj,
-                            ublas::vector<double> &x, std::vector<int> &xSupp,
+double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
+                            arma::vec &x, std::vector<int> &xSupp,
                             const int whichFunc)
 {
     int col, row, rcnt;
@@ -91,7 +92,7 @@ double baldns_heur_primal_0(const ublas::matrix<double> &mat, const ublas::vecto
     double val, zUpp, cnt;
     double (*func)(const double, const double);
 
-    std::unique_ptr<std::vector<std::pair<int, int>>> rSet (new std::vector<std::pair<int, int>>(mat.size1()));
+    std::unique_ptr<std::vector<std::pair<int, int>>> rSet (new std::vector<std::pair<int, int>>);
 
     // all the functions defined by Balas and Ho
     // plus the last two defined by Vasko and Wilson
@@ -124,14 +125,14 @@ double baldns_heur_primal_0(const ublas::matrix<double> &mat, const ublas::vecto
     }
 
     // get the starting value of the current solution x
-    zUpp = ublas::inner_prod(obj, x);
+    zUpp = arma::dot(obj, x);
 
-    // find the number of already covered rowa
+    // find the number of already covered rows
     coveredRows = 0;
-    for (i = mat.size1(); i--;)
+    for (i = mat.n_rows; i--;)
     {
-        cnt = ublas::inner_prod(ublas::row(mat, i), x);
-        rcnt = round(ublas::sum(ublas::row(mat, i)));
+        cnt = arma::dot(mat.row(i), x);
+        rcnt = round(arma::sum(mat.row(i)));
 
         if (fabs(cnt) < SC_EPSILON_SMALL)
         {
@@ -143,11 +144,25 @@ double baldns_heur_primal_0(const ublas::matrix<double> &mat, const ublas::vecto
         }
     }
 
+    /*std::cout << "cov rows = " << coveredRows << std::endl;
+    std::cout << "rows = " << std::endl;
+    for (auto it : *rSet)
+    {
+        std::cout << it.first << " " << it.second << std::endl; 
+    }*/
+
     // sort not covered rows by decreasing number of
     // non-zero elements in the row (read rSet from back to front)
-    std::sort((*rSet).begin(), (*rSet).end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
+    std::sort((*rSet).begin(), (*rSet).end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first < b.first; });
 
-    while (coveredRows < mat.size1())
+    std::cout << "\n\nBALAS HEUR 0\n";
+    std::cout << "sort rows = " << std::endl;
+    for (auto it : *rSet)
+    {
+        std::cout << it.first << " " << it.second << std::endl;
+    }
+
+    while (coveredRows < mat.n_rows)
     {
         // get last element of R
         row = (*rSet).back().second;
@@ -155,21 +170,26 @@ double baldns_heur_primal_0(const ublas::matrix<double> &mat, const ublas::vecto
 
         val = INFINITY;
         col = -1;
-        for (j = 0; j < mat.size2(); ++j)
+        for (j = 0; j < mat.n_cols; ++j)
         {
-            if (fabs(mat(row, j)) < SC_EPSILON_SMALL)
+            // if mat[row, col] is 0 or if x(col) is already taken, skip this column
+            if ((fabs(mat(row, j)) < SC_EPSILON_SMALL) || (x(j) > SC_EPSILON_SMALL))
             {
                 continue;
             }
 
-            cnt = ublas::sum(ublas::column(mat, j));
+            cnt = arma::sum(mat.col(j));
 
+            // use the column j that minimise the value
+            // of the selected function
             if (func(obj(j), cnt) < val)
             {
                 val = func(obj(j), cnt);
                 col = j;
             }
         }
+
+        std::cout << "row = " << row << " col = " << col << " cov rows = " << coveredRows << std::endl;
 
         xSupp.push_back(col);
         x(col) = 1.0;
@@ -204,7 +224,194 @@ double baldns_heur_primal_0(const ublas::matrix<double> &mat, const ublas::vecto
         }
     }
 
-    delete &rSet;
-
     return zUpp;
 }
+
+/*int SCbalasheurdual1(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s)
+{
+
+    char *matr;
+    int cnt, rcnt, firsttime, itercnt, i, j, row, srtrowssize = 2, srtrowslen = 0;
+    SCi2tuple *srtrows;
+
+    for (i = 0; i < nrows; ++i)
+    {
+        u[i] = 0.0;
+    }
+
+    srtrows = (SCi2tuple *)malloc(srtrowssize * sizeof(SCi2tuple));
+    for (i = 0; i < nrows; ++i)
+    {
+
+        // No need to generate R and T(x) sets: cnt says how
+        // much a row is covered and if cnt < 1 (minimum
+        // cover) skip the row
+        cnt = 0;
+        rcnt = 0;
+        matr = &mat[i * ncols];
+        for (j = 0; j < ncols; ++j)
+        {
+            cnt += (matr[j] & x[j]);
+            rcnt += matr[j];
+        }
+
+        if (cnt == 1)
+        {
+            srtrows[srtrowslen].a = rcnt;
+            srtrows[srtrowslen++].b = i;
+
+            if (srtrowslen == srtrowssize)
+            {
+                srtrowssize <<= 1;
+                srtrows = (SCi2tuple *)realloc(srtrows, srtrowssize * sizeof(SCi2tuple));
+            }
+        }
+    }
+
+    qsort(srtrows, srtrowslen, sizeof(SCi2tuple), SCi2tuple_cmpa);
+
+    itercnt = 0;
+    firsttime = 1;
+    while (itercnt < srtrowslen)
+    {
+
+        row = srtrows[itercnt++].b;
+
+        u[row] = INFINITY;
+        matr = &mat[row * ncols];
+        for (j = 0; j < ncols; ++j)
+        {
+            u[row] = matr[j] && (s[j] < u[row]) ? s[j] : u[row];
+        }
+
+        for (j = 0; j < ncols; ++j)
+        {
+            s[j] -= u[row] * matr[j];
+        }
+
+        if ((itercnt == srtrowslen) && firsttime)
+        {
+
+            itercnt = 0;
+            firsttime = 0;
+            srtrowslen = 0;
+
+            for (i = 0; i < nrows; ++i)
+            {
+
+                // No need to generate R and T(x) sets: cnt says how
+                // much a row is covered and if cnt < 1 (minimum
+                // cover) skip the row
+                cnt = 0;
+                rcnt = 0;
+                matr = &mat[i * ncols];
+                for (j = 0; j < ncols; ++j)
+                {
+                    cnt += (matr[j] & x[j]);
+                    rcnt += matr[j];
+                }
+
+                if (cnt > 1)
+                {
+                    srtrows[srtrowslen].a = rcnt;
+                    srtrows[srtrowslen++].b = i;
+
+                    if (srtrowslen == srtrowssize)
+                    {
+                        srtrowssize <<= 1;
+                        srtrows = (SCi2tuple *)realloc(srtrows, srtrowssize * sizeof(SCi2tuple));
+                    }
+                }
+            }
+            qsort(srtrows, srtrowslen, sizeof(SCi2tuple), SCi2tuple_cmpa);
+        }
+    }
+
+    return 0;
+}
+
+int baldns_heur_dual_3(arma::mat &mat,arma::vec &x, arma::vec &u, arma::vec &s, const double zUpp)
+{
+    char *matr;
+    int cnt, itercnt, i, j, row, srtrowssize = 2, srtrowslen = 0;
+    double sdotx, usum, val;
+    SCi2tuple *srtrows;
+
+    sdotx = 0.0;
+    for (j = 0; j < ncols; ++j)
+    {
+        sdotx += s[j] * x[j];
+    }
+
+    usum = 0.0;
+    for (i = 0; i < nrows; ++i)
+    {
+        usum += u[i];
+    }
+
+    if (sdotx >= (zu - usum))
+    {
+        goto TERMINATE1;
+    }
+
+    srtrows = (SCi2tuple *)malloc(srtrowssize * sizeof(SCi2tuple));
+    for (i = 0; i < nrows; ++i)
+    {
+
+        // No need to generate R and T(x) sets: cnt says how
+        // much a row is covered and if cnt < 1 (minimum
+        // cover) skip the row
+        cnt = 0;
+        matr = &mat[i * ncols];
+        for (j = 0; j < ncols; ++j)
+        {
+            cnt += (matr[j] & x[j]);
+        }
+
+        if ((u[i] > SC_EPSILON_SMALL) && (cnt > 1))
+        {
+            srtrows[srtrowslen].a = cnt;
+            srtrows[srtrowslen++].b = i;
+
+            if (srtrowslen == srtrowssize)
+            {
+                srtrowssize <<= (char)1;
+                srtrows = (SCi2tuple *)realloc(srtrows, srtrowssize * sizeof(SCi2tuple));
+            }
+        }
+    }
+
+    if (srtrowslen == 0)
+    {
+        free(srtrows);
+        return 0;
+    }
+
+    qsort(srtrows, srtrowslen, sizeof(SCi2tuple), SCi2tuple_cmpa);
+
+    itercnt = 0;
+    while (sdotx < (zu - usum - SC_EPSILON_SMALL))
+    {
+
+        if (itercnt == srtrowslen)
+        {
+            free(srtrows);
+            return -1;
+        }
+
+        row = srtrows[itercnt++].b;
+
+        val = u[row];
+        matr = &mat[row * ncols];
+        for (j = 0; j < ncols; ++j)
+        {
+            s[j] += val * matr[j];
+            sdotx += val * (matr[j] & x[j]);
+        }
+
+        usum -= val;
+        u[row] = 0.0;
+    }
+
+    return 0;
+}*/

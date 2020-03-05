@@ -7,7 +7,7 @@ BOOST_HOME=/usr/local/boost_1_71_0
 CC=g++
 CFLAGS=-g -Wall -O2 -fpermissive
 
-LDLIBS=-L$(BOOST_HOME)/stage/lib -lboost_program_options -lm -lpthread -ldl
+LDLIBS=-L$(BOOST_HOME)/stage/lib -lboost_program_options -lm -lpthread -ldl -larmadillo
 INC=-I$(CPLEX_HOME)/concert/include/ -I$(BOOST_HOME)
 
 $(P) : balas_dense.o main.o

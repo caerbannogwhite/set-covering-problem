@@ -254,7 +254,7 @@ int SCMILPsolver(SCinstance &inst)
     status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
     if (status) { perror("Unable to get objective"); goto TERMINATE; }
 
-    CPXsetdblparam(env, CPX_PARAM_TILIM, inst->MIP_time_limit);
+    CPXXsetdblparam(env, CPX_PARAM_TILIM, inst->MIP_time_limit);
 
     inst->SC_BALAS_NODE_CUTS_NUM = 10;
 
@@ -287,7 +287,7 @@ int SCsolverbalascuts(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		goto TERMINATE;
 	}
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
 	status = CPXsetusercutcallbackfunc(env, SCcallbackbalasusercuts_test, inst);
 	if (status)
@@ -325,9 +325,9 @@ int SCsolverbalasrule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		goto TERMINATE;
 	}
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1v1, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1v1, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -364,9 +364,9 @@ int SCsolverbalasrule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		goto TERMINATE;
 	}
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1_test, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1_test, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -408,9 +408,9 @@ int SCsolverbalasrule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
 	CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);*/
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1_sparse, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1_sparse, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -452,9 +452,9 @@ int SCsolverbalasrule1maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp
 	CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
 	CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);*/
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1maxcol_sparse, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1maxcol_sparse, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -483,10 +483,10 @@ int SCsolverbalasrule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	CPXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
 	CPXsetintparam(env, CPX_PARAM_REDUCE, 1);
 	CPXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
-	CPXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, 0.0); // Turn off cuts generation
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, 0.0); // Turn off cuts generation
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule2, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule2, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -513,10 +513,10 @@ int SCsolvermaxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	CPXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
 	CPXsetintparam(env, CPX_PARAM_REDUCE, 1);
 	CPXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
-	CPXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, 0.0); // Turn off cuts generation
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, 0.0); // Turn off cuts generation
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -543,9 +543,9 @@ int SCsolvermaxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		goto TERMINATE;
 	}
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -572,9 +572,9 @@ int SCsolvermaxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		goto TERMINATE;
 	}
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol_sparse, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol_sparse, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
@@ -601,9 +601,9 @@ int SCsolvermaxcoldom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		goto TERMINATE;
 	}
 
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbranchmaxcoldom, inst);
+	status = CPXXsetbranchcallbackfunc(env, SCcallbackbranchmaxcoldom, inst);
 	if (status)
 	{
 		perror("Unable to set branch callback");
