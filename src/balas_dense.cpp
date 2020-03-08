@@ -20,37 +20,41 @@
 int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 					double zLow, std::set<int> &wSet)
 {
-	int colIdx, rowIdx;
-	size_t i, j;
-	double tmp1, tmp2, val;
+	int colIdx;
+	int rowIdx;
+	size_t i;
+	size_t j;
+	double tmp1;
+	double tmp2;
+	double val;
 
-	std::unique_ptr<arma::vec> res(new arma::vec());
+	std::unique_ptr<arma::vec> resPtr(new arma::vec());
 
-	std::unique_ptr<std::set<int>> inter_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> union_ptr(new std::set<int>());
+	std::unique_ptr<std::set<int>> interPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> unionPtr(new std::set<int>());
 
-	std::unique_ptr<std::set<int>> qSet_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> sSet_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> txSet_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> jSet_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> matjSet_ptr(new std::set<int>());
+	std::unique_ptr<std::set<int>> qSetPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> sSetPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> tSetPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> jSetPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> mSetPtr(new std::set<int>());
 
 	// initialize set S
 	for (j = mat.n_cols; j--;)
 	{
 		if ((fabs(x(j) - 1.0) < SC_EPSILON_SMALL) && (s(j) > 0))
 		{
-			(*sSet_ptr).insert(j);
+			sSetPtr->insert(j);
 		}
 	}
 
 	// intialize T(x) set
-	(*res) = mat * x;
+	(*resPtr) = mat * x;
 	for (i = mat.n_rows; i--;)
 	{
-		if (fabs((*res)(i)-1.0) < SC_EPSILON_SMALL)
+		if (fabs((*resPtr)(i) - 1.0) < SC_EPSILON_SMALL)
 		{
-			(*txSet_ptr).insert(i);
+			tSetPtr->insert(i);
 		}
 	}
 
@@ -58,7 +62,7 @@ int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 	{
 		tmp1 = -INFINITY;
 		tmp2 = INFINITY;
-		for (auto jt = (*sSet_ptr).cbegin(); jt != (*sSet_ptr).cend(); ++jt)
+		for (auto jt = sSetPtr->cbegin(); jt != sSetPtr->cend(); ++jt)
 		{
 			tmp1 = (s(*jt) > tmp1) ? s(*jt) : tmp1;
 			tmp2 = (s(*jt) >= (zUpp - zLow)) && (s(*jt) < tmp2) ? s(j) : tmp2;
@@ -68,30 +72,30 @@ int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 
 		// fill set J: column j in set S such that s[j] == val
 		// fill set Q: column j in set S such that s[j] >= val
-		(*jSet_ptr).clear();
-		(*qSet_ptr).clear();
-		for (auto jt = (*sSet_ptr).cbegin(); jt != (*sSet_ptr).cend(); ++jt)
+		jSetPtr->clear();
+		qSetPtr->clear();
+		for (auto jt = sSetPtr->cbegin(); jt != sSetPtr->cend(); ++jt)
 		{
 			if (fabs(val - s(*jt)) < SC_EPSILON_SMALL)
 			{
-				(*jSet_ptr).insert(*jt);
+				jSetPtr->insert(*jt);
 			}
 
 			if (s(*jt) >= val)
 			{
-				(*qSet_ptr).insert(*jt);
+				qSetPtr->insert(*jt);
 			}
 		}
 
 		// fill M_J
-		(*matjSet_ptr).clear();
-		for (auto jt = (*jSet_ptr).cbegin(); jt != (*jSet_ptr).cend(); ++jt)
+		mSetPtr->clear();
+		for (auto jt = jSetPtr->cbegin(); jt != jSetPtr->cend(); ++jt)
 		{
 			for (i = mat.n_rows; i--;)
 			{
 				if (mat(i, *jt) > 0.5)
 				{
-					(*matjSet_ptr).insert(i);
+					mSetPtr->insert(i);
 				}
 			}
 		}
@@ -100,15 +104,15 @@ int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 		tmp1 = INFINITY;
 
 		// find the intersection between set T(x) and set M_J
-		std::set_intersection((*txSet_ptr).begin(), (*txSet_ptr).end(), (*matjSet_ptr).begin(), (*matjSet_ptr).end(), std::inserter((*inter_ptr), (*inter_ptr).begin()));
+		std::set_intersection(tSetPtr->begin(), tSetPtr->end(), mSetPtr->begin(), mSetPtr->end(), std::inserter(*interPtr, interPtr->begin()));
 
 		// get the union of set W and set Q
-		std::set_union(wSet.begin(), wSet.end(), (*qSet_ptr).begin(), (*qSet_ptr).end(), std::inserter((*union_ptr), (*union_ptr).begin()));
+		std::set_union(wSet.begin(), wSet.end(), qSetPtr->begin(), qSetPtr->end(), std::inserter(*unionPtr, unionPtr->begin()));
 
-		for (auto it = (*inter_ptr).cbegin(); it != (*inter_ptr).cend(); ++it)
+		for (auto it = interPtr->cbegin(); it != interPtr->cend(); ++it)
 		{
 			tmp2 = 0.0;
-			for (auto jt = (*union_ptr).cbegin(); jt != (*union_ptr).cend(); ++jt)
+			for (auto jt = unionPtr->cbegin(); jt != unionPtr->cend(); ++jt)
 			{
 				tmp2 += mat(*it, *jt);
 			}
@@ -121,9 +125,9 @@ int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 		}
 
 		colIdx = -1;
-		for (auto jt = (*jSet_ptr).cbegin(); jt != (*jSet_ptr).cend(); ++jt)
+		for (auto jt = jSetPtr->cbegin(); jt != jSetPtr->cend(); ++jt)
 		{
-			if (mat(rowIdx, *jt) > 0.5)
+			if (mat(rowIdx, *jt) > (1.0 - SC_EPSILON_SMALL))
 			{
 				colIdx = *jt;
 				break;
@@ -134,16 +138,16 @@ int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 
 		for (j = mat.n_cols; j--;)
 		{
-			if ((*qSet_ptr).find(j) == (*qSet_ptr).end())
+			if (qSetPtr->find(j) == qSetPtr->end())
 			{
-				if (mat(rowIdx, j) > 0.5)
+				if (mat(rowIdx, j) > (1.0 - SC_EPSILON_SMALL))
 				{
 					wSet.insert(j);
 				}
 			}
 			else
 			{
-				if (mat(rowIdx, j) > 0.5)
+				if (mat(rowIdx, j) > (1.0 - SC_EPSILON_SMALL))
 				{
 					s(j) -= s(colIdx);
 				}
@@ -157,7 +161,7 @@ int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 		}
 
 		// update set S
-		(*sSet_ptr).erase(colIdx);
+		sSetPtr->erase(colIdx);
 	}
 
 	return 0;
@@ -184,35 +188,44 @@ int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 						double zLow, std::vector<std::set<int>> branchSet,
 						const int maxBranch, const int maxSingl)
 {
-	int cnt, cntNonZero, cntSingl, p, colIdx, rowIdx;
-	size_t i, j;
-	double val, tmp1, tmp2;
+	int cnt;
+	int cntNonZero;
+	int cntSingl;
+	int p;
+	int colIdx;
+	int rowIdx;
+	size_t i;
+	size_t j;
+	double val;
+	double tmp1;
+	double tmp2;
 
-	std::unique_ptr<arma::vec> res_ptr(new arma::vec());
-	std::unique_ptr<arma::uvec> indeces_ptr(new arma::uvec());
+	std::unique_ptr<arma::vec> resPtr(new arma::vec());
 
-	std::unique_ptr<std::set<int>> intersect_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> sSet_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> txSet_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> jSet_ptr(new std::set<int>());
-	std::unique_ptr<std::set<int>> matjSet_ptr(new std::set<int>());
+	std::unique_ptr<arma::uvec> indecesPtr(new arma::uvec());
+
+	std::unique_ptr<std::set<int>> interPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> sSetPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> tSetPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> jSetPtr(new std::set<int>());
+	std::unique_ptr<std::set<int>> mSetPtr(new std::set<int>());
 
 	// init S set
 	for (j = mat.n_cols; j--;)
 	{
 		if ((fabs(x(j) - 1.0) < SC_EPSILON_SMALL) && (s(j) > 0.0))
 		{
-			(*sSet_ptr).insert(j);
+			sSetPtr->insert(j);
 		}
 	}
 
 	// inti T(x) set
-	(*res_ptr) = mat * x;
+	(*resPtr) = mat * x;
 	for (i = mat.n_rows; i--;)
 	{
-		if (fabs((*res_ptr)(i)-1.0) < SC_EPSILON_SMALL)
+		if (fabs((*resPtr)(i) - 1.0) < SC_EPSILON_SMALL)
 		{
-			(*txSet_ptr).insert(i);
+			tSetPtr->insert(i);
 		}
 	}
 
@@ -223,7 +236,7 @@ int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 	{
 		tmp1 = -INFINITY;
 		tmp2 = INFINITY;
-		for (auto jt = (*sSet_ptr).cbegin(); jt != (*sSet_ptr).cend(); ++jt)
+		for (auto jt = sSetPtr->cbegin(); jt != sSetPtr->cend(); ++jt)
 		{
 			tmp1 = (s(*jt) > tmp1) ? s(*jt) : tmp1;
 			tmp2 = (s(*jt) >= (zUpp - zLow)) && (s(*jt) < tmp2) ? s(j) : tmp2;
@@ -232,31 +245,31 @@ int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 		val = tmp1 > tmp2 ? tmp2 : tmp1;
 
 		// fill J set
-		(*jSet_ptr).clear();
-		for (auto jt = (*sSet_ptr).cbegin(); jt != (*sSet_ptr).cend(); ++jt)
+		jSetPtr->clear();
+		for (auto jt = sSetPtr->cbegin(); jt != sSetPtr->cend(); ++jt)
 		{
 			if (abs(val - s(*jt)) < SC_EPSILON_SMALL)
 			{
-				(*jSet_ptr).insert(*jt);
+				jSetPtr->insert(*jt);
 			}
 		}
 
 		// fill M_J set
-		(*matjSet_ptr).clear();
-		for (auto jt = (*jSet_ptr).cbegin(); jt != (*jSet_ptr).cend(); ++jt)
+		mSetPtr->clear();
+		for (auto jt = jSetPtr->cbegin(); jt != jSetPtr->cend(); ++jt)
 		{
 			for (i = mat.n_rows; i--;)
 			{
 				if (fabs(mat(i, *jt) - 1.0) < SC_EPSILON_SMALL)
 				{
-					(*matjSet_ptr).insert(i);
+					mSetPtr->insert(i);
 				}
 			}
 		}
 
 		// fill Q_p
-		(*indeces_ptr) = arma::find(s >= val);
-		for (auto jt = (*indeces_ptr).cbegin(); jt != (*indeces_ptr).cend(); ++jt)
+		(*indecesPtr) = arma::find(s >= val);
+		for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 		{
 			branchSet[p].insert(j);
 		}
@@ -265,13 +278,13 @@ int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 		tmp1 = INFINITY;
 
 		// find the intersection between set T(x) and set M_J
-		std::set_intersection((*txSet_ptr).begin(), (*txSet_ptr).end(), (*matjSet_ptr).begin(), (*matjSet_ptr).end(), std::inserter((*intersect_ptr), (*intersect_ptr).begin()));
-		for (auto it = (*intersect_ptr).cbegin(); it != (*intersect_ptr).cend(); ++it)
+		std::set_intersection(tSetPtr->begin(), tSetPtr->end(), mSetPtr->begin(), mSetPtr->end(), std::inserter(*interPtr, interPtr->begin()));
+		for (auto it = interPtr->cbegin(); it != interPtr->cend(); ++it)
 		{
 			// count all non-zero elements on i-th row that are not on p-th (current) branch set
 			cnt = 0;
-			(*indeces_ptr) = arma::find(mat.row(*it) > 0.5);
-			for (auto jt = (*indeces_ptr).cbegin(); jt != (*indeces_ptr).cend(); ++jt)
+			(*indecesPtr) = arma::find(mat.row(*it) > 0.5);
+			for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 			{
 				cnt += (branchSet[p].find(*jt) == branchSet[p].end());
 			}
@@ -284,7 +297,7 @@ int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 		}
 
 		colIdx = -1;
-		for (auto jt = (*jSet_ptr).cbegin(); jt != (*jSet_ptr).cend(); ++jt)
+		for (auto jt = jSetPtr->cbegin(); jt != jSetPtr->cend(); ++jt)
 		{
 			if (mat(rowIdx, *jt) > 0.5)
 			{
@@ -323,7 +336,7 @@ int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 			break;
 		}
 
-		(*sSet_ptr).erase(colIdx);
+		sSetPtr->erase(colIdx);
 		p++;
 	}
 
@@ -351,17 +364,22 @@ int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double 
 							 double zLow, std::vector<std::unordered_set<int>> branchSet,
 							 const int maxBranch, const int maxSingl)
 {
-	int p, cnt, cntNonZero, cntSingl, colIdx;
+	int p;
+	int cnt;
+	int cntNonZero;
+	int cntSingl;
+	int colIdx;
 	size_t j;
 	double val;
-	std::unique_ptr<std::unordered_set<int>> sSet_ptr(new std::unordered_set<int>());
+
+	std::unique_ptr<std::unordered_set<int>> sSetPtr(new std::unordered_set<int>());
 
 	// init set S
 	for (j = mat.n_cols; j--;)
 	{
 		if (((fabs(x(j)) - 1.0) < SC_EPSILON_SMALL) && (s(j) > 0.0))
 		{
-			(*sSet_ptr).insert(j);
+			sSetPtr->insert(j);
 		}
 	}
 
@@ -372,7 +390,7 @@ int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double 
 	{
 		// get the index of the column with maximum reduced cost
 		val = -INFINITY;
-		for (auto it = (*sSet_ptr).cbegin(); it != (*sSet_ptr).cend(); ++it)
+		for (auto it = sSetPtr->cbegin(); it != sSetPtr->cend(); ++it)
 		{
 			if (s(j) > val)
 			{
@@ -385,7 +403,7 @@ int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double 
 		cnt = 0;
 		for (j = 0; j < mat.n_cols; ++j)
 		{
-			if ((s(j) >= val) && ((*sSet_ptr).find(j) == (*sSet_ptr).end()))
+			if ((s(j) >= val) && (sSetPtr->find(j) == sSetPtr->end()))
 			{
 				branchSet[p].insert(j);
 				++cnt;
@@ -421,7 +439,7 @@ int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double 
 			s(*it) -= val;
 		}
 
-		(*sSet_ptr).erase(colIdx);
+		sSetPtr->erase(colIdx);
 		p++;
 	}
 
@@ -433,25 +451,25 @@ int baldns_over_sat_rows(arma::mat &mat, arma::vec &x)
 	size_t i;
 	double cnt;
 
-	std::unique_ptr<arma::uvec> indeces_ptr(new arma::uvec());
-	std::unique_ptr<arma::uvec> supp_ptr(new arma::uvec());
-	std::unique_ptr<arma::vec> matDotX_ptr(new arma::vec());
+	std::unique_ptr<arma::uvec> indecesPtr(new arma::uvec());
+	std::unique_ptr<arma::uvec> suppPtr(new arma::uvec());
+	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec());
 
-	(*supp_ptr) = arma::find(x > 0.5);
-	(*matDotX_ptr) = mat * x;
+	(*suppPtr) = arma::find(x > 0.5);
+	(*matDotXPtr) = mat * x;
 
-	for (auto jt = (*supp_ptr).cbegin(); jt != (*supp_ptr).cend(); ++jt)
+	for (auto jt = suppPtr->cbegin(); jt != suppPtr->cend(); ++jt)
 	{
 		cnt = 0.0;
-		(*indeces_ptr) = arma::find((*matDotX_ptr) > 1.0);
-		for (auto it = (*indeces_ptr).cbegin(); it != (*indeces_ptr).cend(); ++jt)
+		(*indecesPtr) = arma::find((*matDotXPtr) > 1.0);
+		for (auto it = (*indecesPtr).cbegin(); it != (*indecesPtr).cend(); ++jt)
 		{
 			cnt += mat(*it, *jt);
 		}
 
 		if (cnt > 0.0)
 		{
-			(*matDotX_ptr) -= mat.col(*jt);
+			(*matDotXPtr) -= mat.col(*jt);
 			x(*jt) = 0.0;
 		}
 	}
@@ -471,10 +489,11 @@ int baldns_over_sat_rows(arma::mat &mat, arma::vec &x)
 int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 {
 	int cntRemoved;
-	size_t i, j;
+	size_t i;
+	size_t j;
 
-	std::unique_ptr<arma::vec> matDotX_ptr(new arma::vec(mat.n_rows));
-	*matDotX_ptr = mat * x;
+	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
+	(*matDotXPtr) = mat * x;
 
 	cntRemoved = 0;
 	for (j = mat.n_cols; j--;)
@@ -484,7 +503,7 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 			x(j) = 0.0;
 			for (i = 0; i < mat.n_rows; ++i)
 			{
-				if ((mat(i, j) > SC_EPSILON_SMALL) && ((*matDotX_ptr)(i) < 2.0))
+				if ((mat(i, j) > SC_EPSILON_SMALL) && ((*matDotXPtr)(i) < 2.0))
 				{
 					x(j) = 1.0;
 					break;
@@ -493,8 +512,8 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 
 			if (x(j) < SC_EPSILON_SMALL)
 			{
-				cntRemoved++;
-				(*matDotX_ptr) -= mat.col(j);
+				++cntRemoved;
+				(*matDotXPtr) -= mat.col(j);
 			}
 		}
 	}
@@ -512,22 +531,7 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
  */
 bool baldns_is_cover(const arma::mat &mat, arma::vec &x)
 {
-	bool flag;
-
-	std::unique_ptr<arma::vec> matDotX_ptr(new arma::vec(mat.n_rows));
-	*matDotX_ptr = mat * x;
-
-	flag = true;
-	for (auto it = (*matDotX_ptr).cbegin(); it != (*matDotX_ptr).cend(); ++it)
-	{
-		if (*it < 1.0)
-		{
-			flag = false;
-			break;
-		}
-	}
-
-	return flag;
+	return arma::all((mat * x) > (1.0 - SC_EPSILON_SMALL));
 }
 
 /**
@@ -538,19 +542,23 @@ bool baldns_is_cover(const arma::mat &mat, arma::vec &x)
  * @param mat - arma::mat SCP matrix
  * @param obj - arma::vec SCP objective values
  * @param x - arma::vec a solution for the SCP
- * @param xSupp - 
  * @param whichFunc - select function for heuristic
  * @return the value of the best primal solution found
  */
 double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 							arma::vec &x, const int whichFunc)
 {
-	int colIdx, rowIdx;
-	size_t i, j, coveredRows;
-	double bestVal, val, zUpp, cnt;
+	int colIdx;
+	int rowIdx;
+	size_t i;
+	size_t j;
+	double bestVal;
+	double val;
+	double zUpp;
+	double cnt;
 	double (*func)(const double, const double);
 
-	std::unique_ptr<std::vector<std::pair<int, int>>> rSet_ptr(new std::vector<std::pair<int, int>>);
+	std::unique_ptr<std::vector<std::pair<int, int>>> rSetPtr(new std::vector<std::pair<int, int>>);
 
 	// all the functions defined by Balas and Ho
 	// plus the last two defined by Vasko and Wilson
@@ -585,8 +593,7 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 	// get the starting value of the current solution x
 	zUpp = arma::dot(obj, x);
 
-	// find the number of already covered rows
-	coveredRows = 0;
+	// find rows not already covered and put them in set R
 	for (i = mat.n_rows; i--;)
 	{
 		val = arma::dot(mat.row(i), x);
@@ -594,37 +601,19 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 
 		if (fabs(val) < SC_EPSILON_SMALL)
 		{
-			(*rSet_ptr).push_back(std::make_pair(cnt, i));
-		}
-		else
-		{
-			coveredRows++;
+			rSetPtr->push_back(std::make_pair(cnt, i));
 		}
 	}
-
-	/*std::cout << "cov rows = " << coveredRows << std::endl;
-    std::cout << "rows = " << std::endl;
-    for (auto it : *rSet_ptr)
-    {
-        std::cout << it.first << " " << it.second << std::endl; 
-    }*/
 
 	// sort not covered rows by decreasing number of
-	// non-zero elements in the row (read rSet_ptr from back to front)
-	std::sort((*rSet_ptr).begin(), (*rSet_ptr).end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first < b.first; });
+	// non-zero elements in the row (read rSetPtr from back to front)
+	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first < b.first; });
 
-	std::cout << "\n\nBALAS HEUR 0\n";
-	std::cout << "sort rows = " << std::endl;
-	for (auto it : *rSet_ptr)
+	while (rSetPtr->size() > 0)
 	{
-		std::cout << it.first << " " << it.second << std::endl;
-	}
-
-	while (coveredRows < mat.n_rows)
-	{
-		// get last element of R
-		rowIdx = (*rSet_ptr).back().second;
-		(*rSet_ptr).pop_back();
+		// get last element of set R
+		rowIdx = rSetPtr->back().second;
+		rSetPtr->pop_back();
 
 		bestVal = INFINITY;
 		colIdx = -1;
@@ -647,18 +636,16 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 			}
 		}
 
-		std::cout << "row = " << rowIdx << " col = " << colIdx << " cov rows = " << coveredRows << std::endl;
-
+		// update solution and objective value
 		x(colIdx) = 1.0;
 		zUpp += obj(colIdx);
 
-		// remove covered rows
-		for (auto it = (*rSet_ptr).begin(); it != (*rSet_ptr).end();)
+		// remove covered rows from set R
+		for (auto it = rSetPtr->begin(); it != rSetPtr->end();)
 		{
 			if (fabs(mat((*it).second, colIdx) - 1.0) < SC_EPSILON_SMALL)
 			{
-				coveredRows++;
-				(*rSet_ptr).erase(it);
+				rSetPtr->erase(it);
 			}
 			else
 			{
@@ -673,46 +660,56 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 	return zUpp;
 }
 
+/**
+ * Primal heuristic for the SCP as described in "Set Covering algorithms using cutting
+ * planes, heuristics, and subgradient optimization: a computational study"
+ * by Egon Balas and Andrew Ho - Carnegie-Mellon University, Pittsburgh, PA, U.S.A.
+ * 
+ * @param mat - arma::mat SCP matrix
+ * @param obj - arma::vec SCP objective values
+ * @param x - arma::vec a solution for the SCP
+ * @return the value of the best primal solution found
+ */
 double baldns_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x)
 {
 	double zu, zu1, zu2;
 
-	std::unique_ptr<arma::vec> x1_ptr(new arma::vec());
-	std::unique_ptr<arma::vec> x2_ptr(new arma::vec());
+	std::unique_ptr<arma::vec> x1Ptr(new arma::vec());
+	std::unique_ptr<arma::vec> x2Ptr(new arma::vec());
 
 	zu = baldns_heur_primal_0(mat, obj, x, 3);
 
 	// First round
 	baldns_over_sat_rows(mat, x);
 
-	zu1 = baldns_heur_primal_0(mat, obj, *x1_ptr, 1);
-	zu2 = baldns_heur_primal_0(mat, obj, *x2_ptr, 2);
+	zu1 = baldns_heur_primal_0(mat, obj, *x1Ptr, 1);
+	zu2 = baldns_heur_primal_0(mat, obj, *x2Ptr, 2);
 
 	if ((zu1 < zu2) && (zu1 < zu))
 	{
-		x = *x1_ptr;
+		x = *x1Ptr;
 		zu = zu1;
 	}
 	else if ((zu2 < zu1) && (zu2 < zu))
 	{
-		x = *x1_ptr;
+		x = *x1Ptr;
 		zu = zu2;
 	}
 
 	// Second round
 	baldns_over_sat_rows(mat, x);
 
-	zu1 = baldns_heur_primal_0(mat, obj, *x1_ptr, 4);
-	zu2 = baldns_heur_primal_0(mat, obj, *x2_ptr, 5);
+	zu1 = baldns_heur_primal_0(mat, obj, *x1Ptr, 4);
+	zu2 = baldns_heur_primal_0(mat, obj, *x2Ptr, 5);
 
 	if ((zu1 < zu2) && (zu1 < zu))
 	{
-		x = *x1_ptr;
+		x = *x1Ptr;
 		zu = zu1;
 	}
 	else if ((zu2 < zu1) && (zu2 < zu))
 	{
-		x = *x1_ptr;
+		x = *x1Ptr;
 		zu = zu2;
 	}
 
@@ -722,30 +719,32 @@ double baldns_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x)
 double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 							 arma::vec &s, arma::vec &u)
 {
-	int cntCoveredRows, rowIdx;
+	int cntCoveredRows;
+	int rowIdx;
 	size_t i;
-	double zUpp, val;
+	double zUpp;
+	double val;
 
-	std::unique_ptr<std::unordered_set<int>> rSet_ptr;
+	std::unique_ptr<std::unordered_set<int>> rSetPtr;
 
-	std::unique_ptr<arma::uvec> indeces_ptr(new arma::uvec());
-	std::unique_ptr<arma::vec> matDotX_ptr(new arma::vec());
+	std::unique_ptr<arma::uvec> indecesPtr(new arma::uvec());
+	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec());
 
-	(*indeces_ptr) = arma::find(s < SC_EPSILON_SMALL);
-	for (auto jt = (*indeces_ptr).cbegin(); jt != (*indeces_ptr).cend(); ++jt)
+	(*indecesPtr) = arma::find(s < SC_EPSILON_SMALL);
+	for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 	{
 		x(*jt) = 1.0;
 	}
 
 	baldns_make_prime_cover(mat, x);
 
-	(*matDotX_ptr) = mat * x;
+	(*matDotXPtr) = mat * x;
 	cntCoveredRows = 0;
 	for (i = mat.n_rows; i--;)
 	{
-		if ((*matDotX_ptr)(i) < 0.5)
+		if (fabs((*matDotXPtr)(i)) < SC_EPSILON_SMALL)
 		{
-			(*rSet_ptr).insert(i);
+			rSetPtr->insert(i);
 		}
 		else
 		{
@@ -754,15 +753,15 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 	}
 	//printf("bhp5 ok4 cvdrows=%d rsetlen=%d\n", cvdrows, rsetlen);
 
-	while ((*rSet_ptr).size() > 0)
+	while (rSetPtr->size() > 0)
 	{
 		// get a row not covered
-		rowIdx = *(*rSet_ptr).begin();
-		(*rSet_ptr).erase(rowIdx);
+		rowIdx = *rSetPtr->begin();
+		rSetPtr->erase(rowIdx);
 
 		val = INFINITY;
-		(*indeces_ptr) = arma::find(mat.row(rowIdx) > 0.5);
-		for (auto jt = (*indeces_ptr).cbegin(); jt != (*indeces_ptr).cend(); ++jt)
+		(*indecesPtr) = arma::find(mat.row(rowIdx) > (1.0 - SC_EPSILON_SMALL));
+		for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 		{
 			if (s(*jt) < val)
 			{
@@ -772,26 +771,26 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 
 		u(rowIdx) += val;
 
-		for (auto jt = (*indeces_ptr).cbegin(); jt != (*indeces_ptr).cend(); ++jt)
+		for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 		{
 			s(*jt) -= val;
 		}
 
-		(*indeces_ptr) = arma::find(s < SC_EPSILON_SMALL);
-		for (auto jt = (*indeces_ptr).cbegin(); jt != (*indeces_ptr).cend(); ++jt)
+		(*indecesPtr) = arma::find(s < SC_EPSILON_SMALL);
+		for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 		{
 			x(*jt) = 1.0;
 		}
 
 		baldns_make_prime_cover(mat, x);
 
-		(*matDotX_ptr) = mat * x;
+		(*matDotXPtr) = mat * x;
 		cntCoveredRows = 0;
 		for (i = mat.n_rows; i--;)
 		{
-			if ((*matDotX_ptr)(i) < 0.5)
+			if (fabs((*matDotXPtr)(i)) < SC_EPSILON_SMALL)
 			{
-				(*rSet_ptr).insert(i);
+				rSetPtr->insert(i);
 			}
 			else
 			{
@@ -809,13 +808,7 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 
 bool baldns_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u)
 {
-	size_t j;
-
-	std::unique_ptr<arma::vec> res_ptr(new arma::vec());
-
-	(*res_ptr) = obj - (u * mat);
-
-	return arma::all((*res_ptr) > 0.0);
+	return arma::all((obj - (u * mat)) > 0.0);
 }
 
 /**
@@ -833,10 +826,13 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 					   arma::vec &s)
 {
 	bool firstTime;
-	size_t cnt, i, j, rowIdx;
+	size_t cnt;
+	size_t i;
+	size_t j;
+	size_t rowIdx;
 	double val;
 
-	std::unique_ptr<std::vector<std::pair<int, int>>> rSet_ptr(new std::vector<std::pair<int, int>>);
+	std::unique_ptr<std::vector<std::pair<int, int>>> rSetPtr(new std::vector<std::pair<int, int>>);
 
 	u.fill(0.0);
 
@@ -850,18 +846,18 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 
 		if (fabs(val - 1.0) < SC_EPSILON_SMALL)
 		{
-			(*rSet_ptr).push_back(std::make_pair(cnt, i));
+			rSetPtr->push_back(std::make_pair(cnt, i));
 		}
 	}
 
-	std::sort((*rSet_ptr).begin(), (*rSet_ptr).end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
+	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
 
 	firstTime = true;
-	while ((*rSet_ptr).size() > 0)
+	while (rSetPtr->size() > 0)
 	{
 
-		rowIdx = (*rSet_ptr).back().second;
-		(*rSet_ptr).pop_back();
+		rowIdx = rSetPtr->back().second;
+		rSetPtr->pop_back();
 
 		u(rowIdx) = INFINITY;
 		for (j = 0; j < mat.n_cols; ++j)
@@ -871,10 +867,10 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 
 		s -= u(rowIdx) * mat.row(rowIdx);
 
-		if (((*rSet_ptr).size() == 0) && firstTime)
+		if ((rSetPtr->size() == 0) && firstTime)
 		{
 			firstTime = false;
-			(*rSet_ptr).clear();
+			rSetPtr->clear();
 
 			for (i = 0; i < mat.n_rows; ++i)
 			{
@@ -886,11 +882,11 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 
 				if (fabs(val - 1.0) < SC_EPSILON_SMALL)
 				{
-					(*rSet_ptr).push_back(std::make_pair(cnt, i));
+					rSetPtr->push_back(std::make_pair(cnt, i));
 				}
 			}
 
-			std::sort((*rSet_ptr).begin(), (*rSet_ptr).end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
+			std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
 		}
 	}
 
@@ -912,10 +908,13 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 int baldns_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u,
 					   arma::vec &s, const double zUpp)
 {
-	size_t i, rowIdx;
-	double sDotX, zLow, val;
+	int rowIdx;
+	size_t i;
+	double sDotX;
+	double zLow;
+	double val;
 
-	std::unique_ptr<std::vector<std::pair<double, int>>> rSet_ptr(new std::vector<std::pair<double, int>>);
+	std::unique_ptr<std::vector<std::pair<double, int>>> rSetPtr(new std::vector<std::pair<double, int>>);
 
 	sDotX = arma::dot(s, x);
 	zLow = arma::sum(u);
@@ -935,21 +934,21 @@ int baldns_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u,
 
 		if ((u(i) > 0) && (val > 1.0))
 		{
-			(*rSet_ptr).push_back(std::make_pair(val, i));
+			rSetPtr->push_back(std::make_pair(val, i));
 		}
 	}
 
-	if ((*rSet_ptr).size() == 0)
+	if (rSetPtr->size() == 0)
 	{
 		return 0;
 	}
 
-	std::sort((*rSet_ptr).begin(), (*rSet_ptr).end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
+	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
 
 	while (sDotX < (zUpp - zLow - SC_EPSILON_SMALL))
 	{
-		rowIdx = (*rSet_ptr).back().second;
-		(*rSet_ptr).pop_back();
+		rowIdx = rSetPtr->back().second;
+		rSetPtr->pop_back();
 
 		val = u(rowIdx);
 		s += val * mat.row(rowIdx);

@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	SCMILPsolver(&inst);
+	SCMILPsolver(inst);
 
 	return 0;
 }

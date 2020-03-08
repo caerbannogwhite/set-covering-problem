@@ -9,55 +9,65 @@
  *	and launches the solver selected by arguments (with the chosen configuration).
  *	The last step prints out some valuable information regarding the computation.
  */
-STATUS SCMILPsolver(SCinstance &inst)
+
+/**
+ * In this function preprocessing and optimisation
+ * routines are colled.
+ * 
+ * @param inst - SCP instance
+ * @return a code
+ */
+int SCMILPsolver(SCinstance &inst)
 {
-	STATUS status = SC_SUCCESFULL; 
+	int error;
 	double timeStart, timeEnd;
+	std::string problemName = "set_covering-";
 	std::vector<std::string> tokens;
 
-	boost::split(tokens, inst.inputFilePath, boost::is_any_of("/"));
-	string problem_name = "set_covering-" + tokens[tokens.size() - 1];
+	boost::split(tokens, inst.inputFilePath, boost::any_of("/."));
+	problemName += tokens[tokens.size() - 2];
 
 
-	/* ---------------------- START CPLEX AND IMPORT THE MODEL ---------------- */
-	IloEnv env;
-	IloCplex cplex(env);
-	IloModel model(env);
+	/////////////////////////	 START CPLEX AND IMPORT THE MODEL	/////////////////////
+	CPXENVptr env = CPXopenCPLEX(&error);
+	CPXLPptr lp = CPXcreateprob(env, &error, problemName.c_str);
+
+	CPXXsetintparam(env, CPX_PARAM_THREADS, inst.numThreads);
 
 
-	/* ---------------------- PRESOLVE ---------------------------------------- */
-	/*CPXENVptr pre_env = CPXopenCPLEX(&error);
+	/////////////////////////	 PRESOLVE	/////////////////////////////////////////////
+	CPXENVptr pre_env = CPXopenCPLEX(&error);
 	CPXLPptr pre_lp = CPXcreateprob(pre_env, &error, "presolver");
 	CPXLPptr red_lp = CPXcreateprob(pre_env, &error, "red-lp");
-	CPXreadcopyprob(pre_env, pre_lp, &inst->instance_name[0], NULL);
+	CPXreadcopyprob(pre_env, pre_lp, &inst.inputFilePath, NULL);
 
-	cplex.setParam(IloCplex::Param::Threads, inst.numThreads);
+	CPXXsetintparam(pre_env, CPX_PARAM_THREADS, inst.numThreads);
 
-	timeStart = cplex.getCplexTime();
+	CPXgettime(env, &timeStart);
 
-	// CPLEX PRESOLVER: set the maximum number of nodes to 1 and launch the solver
+	/*// CPLEX PRESOLVER: set the maximum number of nodes to 1 and launch the solver
 	// Then collect the reduced model and save it in lp file
 	if (inst.presolver.compare("cplex") == 0)
 	{
-		CPXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
+		CPXXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
 		CPXmipopt(pre_env, pre_lp);
 
 		//CPXgetredlp(pre_env, pre_lp, &red_lp);
 
-		//char cpx_problem_name[100];
-		//strcpy(cpx_problem_name, inst->instance_name);
-		//strcat(cpx_problem_name, "_cpx.lp");
+		//char cpx_problemName[100];
+		//strcpy(cpx_problemName, inst.inputFilePath);
+		//strcat(cpx_problemName, "_cpx.lp");
 
-		//error = CPXwriteprob(pre_env, red_lp, cpx_problem_name, NULL);
+		//error = CPXwriteprob(pre_env, red_lp, cpx_problemName, NULL);
 		//if (error) { printf("CPXwriteprob error: %d\n", error); }
 		//printf("cols = %d\n", CPXgetnumcols(pre_env, red_lp));
 	}
 
 	// DOMINANCE PRESOLVER: scen all the columns to find dominated ones
-	else if (inst.dnsmatpresolver.compare("dominance") == 0)
+	else if (inst.presolver.compare("dominance") == 0)
 	{
 
-		CPXreadcopyprob(env, lp, &inst->instance_name[0], NULL);
+		CPXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
 
 		SCdominancepresolver(inst, env, lp);
 
@@ -71,10 +81,10 @@ STATUS SCMILPsolver(SCinstance &inst)
 			}
 		}
 
-		string dom_problem_name;
-		dom_problem_name = inst->instance_name + "_dom.lp";
+		string dom_problemName;
+		dom_problemName = inst.inputFilePath + "_dom.lp";
 
-		error = CPXwriteprob(env, lp, &dom_problem_name[0], NULL);
+		error = CPXwriteprob(env, lp, &dom_problemName[0], NULL);
 		if (error)
 		{
 			printf("CPXwriteprob error: %d\n", error);
@@ -86,8 +96,8 @@ STATUS SCMILPsolver(SCinstance &inst)
 	// collect the reduced model and launch the dominance presolver on it
 	// REMOVE (?): the same result can be obtained by using the cplex presolver and providing
 	// the reduced model as the input for the dominance routine
-	else if (strcmp(inst->presolver, "cplex+dominance") == 0) {
-		CPXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
+	else if (strcmp(inst.presolver, "cplex+dominance") == 0) {
+		CPXXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
 
 		CPXmipopt(pre_env, pre_lp);
 		CPXgetredlp(pre_env, pre_lp, &red_lp);
@@ -99,9 +109,9 @@ STATUS SCMILPsolver(SCinstance &inst)
 		error = CPXreadcopyprob(env, lp, "reduced_model.lp", NULL);
 		if (error) { printf("CPXreadcopyprob error: %d\n", error); }
 
-		inst->num_selected_cols = CPXgetnumcols(env, lp);
-		inst->selected_columns = (char *) malloc(inst->num_selected_cols);
-		for (int j = 0; j < inst->num_selected_cols; ++j) inst->selected_columns[j] = 1;
+		inst.num_selected_cols = CPXgetnumcols(env, lp);
+		inst.selected_columns = (char *) malloc(inst.num_selected_cols);
+		for (int j = 0; j < inst.num_selected_cols; ++j) inst.selected_columns[j] = 1;
 
 		SCdominancepresolver(inst, env, lp);
 
@@ -113,28 +123,27 @@ STATUS SCMILPsolver(SCinstance &inst)
 			}
 		}
 
-		char dom_problem_name[100];
+		char dom_problemName[100];
 
-		strcpy(dom_problem_name, inst->instance_name);
-		strcat(dom_problem_name, "_dom.lp");
+		strcpy(dom_problemName, inst.inputFilePath);
+		strcat(dom_problemName, "_dom.lp");
 
-		error = CPXwriteprob(env, lp, dom_problem_name, NULL);
+		error = CPXwriteprob(env, lp, dom_problemName, NULL);
 		if (error) { printf("CPXwriteprob error: %d\n", error); }
 
 		printf("cols = %d\n", CPXgetnumcols(env, lp));
-		printf("cols = %d\n", inst->num_selected_cols);
-		free(inst->selected_columns);
+		printf("cols = %d\n", inst.num_selected_cols);
+		free(inst.selected_columns);
     }
 
 	// NO PRESOLVER
 	else
 	{
-		if (inst->verbosity > 0)
+		if (inst.verbosity > 0)
 			printf("No presolver selected.\n");
-		CPXreadcopyprob(env, lp, &inst->instance_name[0], NULL);
+		CPXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
 	}
-	CPXgettime(env, &timestamp_e);
-	timeEnd = cplex.getCplexTime();
+	CPXgettime(env, &timeEnd);
 
 	CPXfreeprob(pre_env, &red_lp);
 	CPXfreeprob(pre_env, &pre_lp);
@@ -143,115 +152,119 @@ STATUS SCMILPsolver(SCinstance &inst)
 	inst.timePresolver = timeEnd - timeStart;
 
 
-	/* ---------------------- SET PARAMETERS AND SOLVE ------------------------ */
-	if (inst.verbosityLevel > 0)
+	/////////////////////////	 SET PARAMETERS AND SOLVE	/////////////////////////////
+	if (inst.verbosity > 0)
 	{
 		CPXsetlogfilename(env, "log", &mode);
 	}
 
-	cplex.setParam(IloCplex::Param::MIP::Display, inst.verbosityLevel);
-	cplex.setParam(IloCplex::Param::RandomSeed, inst.randomSeed);
-	cplex.setParam(IloCplex::Param::MIP::Tolerances::AbsMIPGap, 1E-4);
-	cplex.setParam(IloCplex::Param::MIP::Tolerances::MIPGap, 1E-4);
+	CPXXsetintparam(env, CPX_PARAM_MIPDISPLAY, inst.verbosity);
+	CPXXsetintparam(env, CPX_PARAM_RANDOMSEED, inst.random_seed);
+	CPXsetdblparam(env, CPX_PARAM_EPAGAP, 1e-4);
+	CPXsetdblparam(env, CPX_PARAM_EPGAP, 1e-4);
 
-	cplex.setParam(IloCplex::Param::Threads, inst.numThreads);
+	CPXXsetintparam(env, CPX_PARAM_THREADS, inst.numThreads);
 
-	//CPXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
-	//CPXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
-	cplex.setParam(IloCplex::Param::Preprocessing::Reduce, 1);
-	cplex.setParam(IloCplex::Param::MIP::Limits::CutsFactor, inst.mipCutsFactor);
+	CPXXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
+	CPXXsetintparam(env, CPX_PARAM_REDUCE, 1);
+	CPXXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
+	CPXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, inst.MIP_cuts_factor);
 
-	cplex.setParam(IloCplex::Param::MIP::Strategy::NodeSelect, 0 <= inst.mipNodesel && inst.mipNodesel <= 3 ? inst.mipNodesel : CPX_NODESEL_BESTBOUND);
-	cplex.setParam(IloCplex::Param::MIP::Strategy::VariableSelect, -1 <= inst.mipVarsel && inst.mipVarsel <= 4 ? inst.mipVarsel : CPX_VARSEL_DEFAULT);
+	CPXXsetintparam(env, CPX_PARAM_NODESEL, 0 <= inst.MIP_nodesel && inst.MIP_nodesel <= 3 ? inst.MIP_nodesel : CPX_NODESEL_BESTBOUND);
+	CPXXsetintparam(env, CPX_PARAM_VARSEL, -1 <= inst.MIP_varsel && inst.MIP_varsel <= 4 ? inst.MIP_varsel : CPX_VARSEL_DEFAULT);
 
-	timeStart = cplex.getCplexTime();
+	//CPXXsetintparam(env, CPX_PARAM_REDUCE, inst.MIP_reduce_prob ? CPX_ON : CPX_OFF);				// Disable problem reduction
+
+	CPXgettime(env, &timeStart);
 	if (inst.solver.compare("cplex") == 0)
 	{
-		cplex.setParam(IloCplex::Param::TimeLimit, inst.mipTimeLimit);
-		cplex.solve();
+
+		CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+		CPXmipopt(env, lp);
+
+		/*} else if (strcmp(inst.solver, "balascuts") == 0) {
+		SCsolverbalascuts(inst, env, lp);*/
 	}
-	else
-	if (inst.solver.compare("balasbcrule1") == 0)
+	else if (inst.solver.compare("balasbcrule1") == 0)
 	{
-		//SCsolverbalasrule1(inst, env, lp);
+		SCsolverbalasrule1(inst, env, lp);
 	}
-	else if (inst->solver.compare("balasbcrule1-test") == 0)
+	else if (inst.solver.compare("balasbcrule1-test") == 0)
 	{
-		//SCsolverbalasrule1_test(inst, env, lp);
+		SCsolverbalasrule1_test(inst, env, lp);
 	}
-	else
-	if (inst.solver.compare("balasbcrule1-sparse") == 0)
+	else if (inst.solver.compare("balasbcrule1-sparse") == 0)
 	{
-		//SCsolverbalasrule1_sparse(inst, env, lp);
+		SCsolverbalasrule1_sparse(inst, env, lp);
 	}
-	else
-	if (inst.solver.compare("balasbcrule2") == 0)
+	else if (inst.solver.compare("balasbcrule2") == 0)
 	{
-		//SCsolverbalasrule2(inst, env, lp);
+		SCsolverbalasrule2(inst, env, lp);
 	}
-	else
-	if (inst.solver.compare("maxcol") == 0)
+	else if (inst.solver.compare("maxcol") == 0)
 	{
-		//SCsolvermaxcol(inst, env, lp);
+		SCsolvermaxcol(inst, env, lp);
 	}
-	else
-	if (inst.solver.compare("maxcol2") == 0)
+	else if (inst.solver.compare("maxcol2") == 0)
 	{
-		//SCsolvermaxcol2(inst, env, lp);
+		SCsolvermaxcol2(inst, env, lp);
 	}
-	else
-	if (inst.solver.compare("maxcol-sparse") == 0)
+	else if (inst.solver.compare("maxcol-sparse") == 0)
 	{
-		//SCsolvermaxcol_sparse(inst, env, lp);
+		SCsolvermaxcol_sparse(inst, env, lp);
 	}
-	else
-	if (inst->solver.compare("maxcoldom") == 0)
+	else if (inst.solver.compare("maxcoldom") == 0)
 	{
-		//SCsolvermaxcoldom(inst, env, lp);
+		SCsolvermaxcoldom(inst, env, lp);
 	}
 	else
 	{
-		std::cerr << "solver unknown." << std::endl;
-		status = SC_SOLVER_NOT_FOUND;
+		std::perror("solver unknown");
 	}
-	timeEnd = cplex.getCplexTime();
+	CPXgettime(env, &timeEnd);
 	inst.timeSolver = timeEnd - timeStart;
 
-	/* ---------------------- GET SOLUTION ------------------------------------ */
-	CPXgetbestobjval(env, lp, &inst->best_obj_val);
-	CPXgetobjval(env, lp, &inst->obj_val);
+
+	/////////////////////////	 GET SOLUTION 	/////////////////////////////////////////
+	//ncols = CPXgetnumcols(env, lp);
+	//inst.x_star = (double *) calloc(ncols, sizeof(double));
+	//CPXgetx(env, lp, inst.x_star, 0, ncols - 1);
+	CPXgetbestobjval(env, lp, &inst.bestObjVal);
+	CPXgetobjval(env, lp, &inst.objVal);
 
 
-	/* ---------------------- CLOSE CPLEX ------------------------------------- */
+	/////////////////////////	CLOSE CPLEX 	/////////////////////////////////////////
 	std::printf("\n");
-	//std::printf("Build time       = %10.4lf\n", inst.timeBuild);
+	std::printf("Build time       = %10.4lf\n", inst.timeBuild);
 	std::printf("Presolver time   = %10.4lf\n", inst.timePresolver);
-	std::printf("Solver time      = %10.4lf\n", inst.timeSolver);
-	//std::printf("Total time       = %10.4lf\n", inst.timeTotal);
+	//std::printf("Solver time      = %10.4lf\n", inst.timeSolver);
+	std::printf("Total time       = %10.4lf\n", inst.timeTotal);
 	std::printf("Best obj val     = %10.4lf\n", inst.bestObjVal);
-	std::printf("Obj val          = %10.4lf\n", inst.objVal);
+	//std::printf("Obj val          = %10.4lf\n", inst.objVal);
 	std::printf("Node total       = %10d\n", CPXgetnodecnt(env, lp));
 	std::printf("Node left        = %10d\n\n", CPXgetnodeleftcnt(env, lp));
 
-	return status;
-}
+	CPXfreeprob(env, &lp);
+	CPXcloseCPLEX(&env);
 
+	return SC_SUCCESFULL;
+}
 /*int SCsolverbalascuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {
     int status;
 
-    inst->nsccols = CPXgetnumcols(env, lp);
-    inst->nscrows = CPXgetnumrows(env, lp);
+    inst.nsccols = CPXgetnumcols(env, lp);
+    inst.nscrows = CPXgetnumrows(env, lp);
 
-    inst->balasnodecnt = 0;
-    inst->cplexnodecnt = 0;
+    inst.balasnodecnt = 0;
+    inst.cplexnodecnt = 0;
 
-    inst->costs = (double *) malloc(inst->nsccols * sizeof(double));
-    status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
+    inst.costs = (double *) malloc(inst.nsccols * sizeof(double));
+    status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
     if (status) { perror("Unable to get objective"); goto TERMINATE; }
 
-    CPXXsetdblparam(env, CPX_PARAM_TILIM, inst->MIP_time_limit);
+    CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
-    inst->SC_BALAS_NODE_CUTS_NUM = 10;
+    inst.SC_BALAS_NODE_CUTS_NUM = 10;
 
 	status = CPXsetusercutcallbackfunc(env, SCcallbackbalasusercuts_sparse, inst);
 	if (status) { perror("Unable to set user cuts callback"); goto TERMINATE; }
@@ -259,7 +272,7 @@ STATUS SCMILPsolver(SCinstance &inst)
     CPXmipopt(env, lp);
 
     TERMINATE:
-    free(inst->costs);
+    free(inst.costs);
 
     return 1;
 }
@@ -268,14 +281,14 @@ int SCsolverbalascuts(SCinstance &inst, IloEnv env, IloCplex cplex)
 {
 	int status;
 
-	inst->nsccols = CPXgetnumcols(env, lp);
-	inst->nscrows = CPXgetnumrows(env, lp);
+	inst.nsccols = CPXgetnumcols(env, lp);
+	inst.nscrows = CPXgetnumrows(env, lp);
 
 	// usato per contare i tagli in questo caso
-	inst->balasnodecnt = 0;
+	inst.balasnodecnt = 0;
 
-	inst->costs = (double *)malloc(inst->nsccols * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
+	inst.costs = (double *)malloc(inst.nsccols * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
 	if (status)
 	{
 		std::cerr << "Unable to get objective" << std::endl;
@@ -293,7 +306,7 @@ int SCsolverbalascuts(SCinstance &inst, IloEnv env, IloCplex cplex)
 
 	CPXmipopt(env, lp);
 
-	//printf("balas cuts = %d\n", inst->balasnodecnt);
+	//printf("balas cuts = %d\n", inst.balasnodecnt);
 
 	return SC_SUCCESFULL;
 }
@@ -305,8 +318,8 @@ int SCsolverbalasrule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	inst->costs = (double *)malloc(inst->nsccols * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
+	inst.costs = (double *)malloc(inst.nsccols * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
 	if (status)
 	{
 		std::cerr << "Unable to get objective" << std::endl;
@@ -324,8 +337,8 @@ int SCsolverbalasrule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 
 	CPXmipopt(env, lp);
 
-	//printf("balas node  = %d\n", inst->balasnodecnt);
-	//printf("cplex node  = %d\n", inst->cplexnodecnt);
+	//printf("balas node  = %d\n", inst.balasnodecnt);
+	//printf("cplex node  = %d\n", inst.cplexnodecnt);
 
 	return 1;
 }
@@ -334,14 +347,14 @@ int SCsolverbalasrule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
-	inst->nsccols = CPXgetnumcols(env, lp);
-	inst->nscrows = CPXgetnumrows(env, lp);
+	inst.nsccols = CPXgetnumcols(env, lp);
+	inst.nscrows = CPXgetnumrows(env, lp);
 
 	inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	inst->costs = (double *)malloc(inst->nsccols * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
+	inst.costs = (double *)malloc(inst.nsccols * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
 	if (status)
 	{
 		perror("Unable to get objective");
@@ -372,18 +385,18 @@ int SCsolverbalasrule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	inst->costs = (double *)malloc(inst->nsccols * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
+	inst.costs = (double *)malloc(inst.nsccols * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
 	if (status)
 	{
 		perror("Unable to get objective");
 		goto TERMINATE;
 	}
 
-	//CPXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
+	//CPXXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
 
-	//CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
-	//CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);
+	//CPXXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
+	//CPXXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);
 
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
@@ -396,8 +409,8 @@ int SCsolverbalasrule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 
 	CPXmipopt(env, lp);
 
-	//printf("balas node  = %d\n", inst->balasnodecnt);
-	//printf("cplex node  = %d\n", inst->cplexnodecnt);
+	//printf("balas node  = %d\n", inst.balasnodecnt);
+	//printf("cplex node  = %d\n", inst.cplexnodecnt);
 
 	return 1;
 }
@@ -410,18 +423,18 @@ int SCsolverbalasrule1maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp
 	inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	inst->costs = (double *)malloc(inst->nsccols * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
+	inst.costs = (double *)malloc(inst.nsccols * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
 	if (status)
 	{
 		perror("Unable to get objective");
 		goto TERMINATE;
 	}
 
-	//CPXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
+	//CPXXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
 
-	//CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
-	//CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);
+	//CPXXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
+	//CPXXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);
 
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
@@ -434,8 +447,8 @@ int SCsolverbalasrule1maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp
 
 	CPXmipopt(env, lp);
 
-	//printf("balas node  = %d\n", inst->balasnodecnt);
-	//printf("cplex node  = %d\n", inst->cplexnodecnt);
+	//printf("balas node  = %d\n", inst.balasnodecnt);
+	//printf("cplex node  = %d\n", inst.cplexnodecnt);
 
 	return 1;
 }
@@ -444,9 +457,9 @@ int SCsolverbalasrule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
-	CPXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
-	CPXsetintparam(env, CPX_PARAM_REDUCE, 1);
-	CPXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
+	CPXXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
+	CPXXsetintparam(env, CPX_PARAM_REDUCE, 1);
+	CPXXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
 	CPXXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, 0.0); // Turn off cuts generation
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
@@ -465,17 +478,17 @@ int SCsolvermaxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
-	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, CPXgetnumcols(env, lp) - 1);
+	inst.costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, CPXgetnumcols(env, lp) - 1);
 	if (status)
 	{
 		perror("Unable to get objective");
 		goto TERMINATE;
 	}
 
-	CPXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
-	CPXsetintparam(env, CPX_PARAM_REDUCE, 1);
-	CPXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
+	CPXXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
+	CPXXsetintparam(env, CPX_PARAM_REDUCE, 1);
+	CPXXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
 	CPXXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, 0.0); // Turn off cuts generation
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
@@ -495,8 +508,8 @@ int SCsolvermaxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
-	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, CPXgetnumcols(env, lp) - 1);
+	inst.costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, CPXgetnumcols(env, lp) - 1);
 	if (status)
 	{
 		perror("Unable to get objective");
@@ -521,8 +534,8 @@ int SCsolvermaxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
-	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, CPXgetnumcols(env, lp) - 1);
+	inst.costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, CPXgetnumcols(env, lp) - 1);
 	if (status)
 	{
 		perror("Unable to get objective");
@@ -547,8 +560,8 @@ int SCsolvermaxcoldom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
-	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
-	status = CPXgetobj(env, lp, inst->costs, 0, CPXgetnumcols(env, lp) - 1);
+	inst.costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
+	status = CPXgetobj(env, lp, inst.costs, 0, CPXgetnumcols(env, lp) - 1);
 	if (status)
 	{
 		perror("Unable to get objective");
