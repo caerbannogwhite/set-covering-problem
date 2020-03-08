@@ -2,15 +2,18 @@
 #ifndef SC_COMMON_H
 #define SC_COMMON_H
 
-#include <ilcplex/ilocplex.h>
+
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
 #include <time.h>
+#include <unordered_set>
 
 #include <armadillo>
+#include <ilcplex/ilocplex.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
@@ -23,10 +26,11 @@ namespace po = boost::program_options;
 #define SC_EPSILON_SMALL 1e-12
 #define BIG_M 1e20
 
-typedef enum CODES
+typedef enum STATUS
 {
     SC_SUCCESFULL,
     SC_GENERIC_ERROR,
+    SC_SOLVER_NOT_FOUND,
     SC_ERR_NOT_COVER,
     SC_ERR_NOT_PRIME_COVER,
     SC_ERR_NOT_DUAL_SOL,

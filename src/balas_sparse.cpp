@@ -1,7 +1,7 @@
 
 #include "balas_sparse.hpp"
 
-int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg,
+/*int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg,
 						const int *cmatind, const int nrows, const int ncols, int *xind,
 						const int xindlen)
 {
@@ -103,21 +103,21 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 		break;
 	}
 
-	/*cmatbeg = (int *) malloc((ncols + 1) * sizeof(int));
-	cmatind = (int *) malloc(rmatbeg[nrows] * sizeof(int));
+	// cmatbeg = (int *) malloc((ncols + 1) * sizeof(int));
+	// cmatind = (int *) malloc(rmatbeg[nrows] * sizeof(int));
 
-	cnt = 0;
-	for (j = 0; j < ncols; ++j) {
-		cmatbeg[j] = cnt;
-		for (i = 0; i < nrows; ++i) {
-			item = bsearch(&j, &rmatind[rmatbeg[i]], rmatbeg[i+1] - rmatbeg[i], sizeof(int), SCint_cmp);
-			if (item != NULL) {
-				cmatind[cnt] = i;
-				cnt++;
-			}
-		}
-	}
-	cmatbeg[ncols] = cnt;*/
+	// cnt = 0;
+	// for (j = 0; j < ncols; ++j) {
+	// 	cmatbeg[j] = cnt;
+	// 	for (i = 0; i < nrows; ++i) {
+	// 		item = bsearch(&j, &rmatind[rmatbeg[i]], rmatbeg[i+1] - rmatbeg[i], sizeof(int), SCint_cmp);
+	// 		if (item != NULL) {
+	// 			cmatind[cnt] = i;
+	// 			cnt++;
+	// 		}
+	// 	}
+	// }
+	// cmatbeg[ncols] = cnt;
 
 	zu = 0.0;
 	rset = (int *)malloc(nrows * sizeof(int));
@@ -231,54 +231,54 @@ double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const i
 			}
 		}
 
-		/*if (jt == -1) {
-			free(rset);
-			return -1;
-		}*/
+		// if (jt == -1) {
+		// 	free(rset);
+		// 	return -1;
+		// }
 
-		xind[*xindlen] = jt;
-		*xindlen += 1;
-		zu += obj[jt];
+xind[*xindlen] = jt;
+*xindlen += 1;
+zu += obj[jt];
 
-		cnt = 0;
-		for (i = 0; i < rsetlen; ++i)
-		{
-			item = (int *)bsearch(&rset[i], &cmatind[cmatbeg[jt]], cmatbeg[jt + 1] - cmatbeg[jt], sizeof(int), SCint_cmp);
-			if (item == NULL)
-			{
-				rsetnew[cnt] = rset[i];
-				cnt++;
-			}
-			else
-			{
-				cvdrows++;
-			}
-		}
-
-		memcpy(rset, rsetnew, cnt * sizeof(int));
-		rsetlen = cnt;
-	}
-
-	free(rset);
-	free(rsetnew);
-
-	// Make the cover a prime cover
-	SCprimecover_sparse(rmatbeg, rmatind, cmatbeg, cmatind, nrows, ncols, xind, *xindlen);
-
-	for (i = 0; i < *xindlen; ++i)
+cnt = 0;
+for (i = 0; i < rsetlen; ++i)
+{
+	item = (int *)bsearch(&rset[i], &cmatind[cmatbeg[jt]], cmatbeg[jt + 1] - cmatbeg[jt], sizeof(int), SCint_cmp);
+	if (item == NULL)
 	{
-		if (xind[i] == -1)
-		{
-			zu -= obj[xind[i]];
-			*xindlen = *xindlen - 1;
-			memcpy(&xind[i], &xind[i + 1], (*xindlen) * sizeof(int));
-			i--;
-		}
+		rsetnew[cnt] = rset[i];
+		cnt++;
 	}
+	else
+	{
+		cvdrows++;
+	}
+}
 
-	qsort(xind, *xindlen, sizeof(int), SCint_cmp);
+memcpy(rset, rsetnew, cnt * sizeof(int));
+rsetlen = cnt;
+}
 
-	return zu;
+free(rset);
+free(rsetnew);
+
+// Make the cover a prime cover
+SCprimecover_sparse(rmatbeg, rmatind, cmatbeg, cmatind, nrows, ncols, xind, *xindlen);
+
+for (i = 0; i < *xindlen; ++i)
+{
+	if (xind[i] == -1)
+	{
+		zu -= obj[xind[i]];
+		*xindlen = *xindlen - 1;
+		memcpy(&xind[i], &xind[i + 1], (*xindlen) * sizeof(int));
+		i--;
+	}
+}
+
+qsort(xind, *xindlen, sizeof(int), SCint_cmp);
+
+return zu;
 }
 
 int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const int nrows,
@@ -341,49 +341,48 @@ int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const in
 
 	free(cmatval);
 
-	/*char *senses;
-	int error, i, j, nzcnt, status;
-	double *cmatval;
+	// char *senses;
+	// int error, i, j, nzcnt, status;
+	// double *cmatval;
 
-	nzcnt = rmatbeg[nrows];
-	cmatval = (double *) malloc(nzcnt * sizeof(double));
-	for (i = 0; i < nzcnt; ++i) {
-		cmatval[i] = 1.0;
-	}
+	// nzcnt = rmatbeg[nrows];
+	// cmatval = (double *) malloc(nzcnt * sizeof(double));
+	// for (i = 0; i < nzcnt; ++i) {
+	// 	cmatval[i] = 1.0;
+	// }
 
-	senses = (char *) malloc(nrows * sizeof(char));
-	for (i = 0; i < nrows; ++i) {
-		senses[i] = 'G';
-	}
+	// senses = (char *) malloc(nrows * sizeof(char));
+	// for (i = 0; i < nrows; ++i) {
+	// 	senses[i] = 'G';
+	// }
 
-	CPXENVptr env = CPXopenCPLEX(&error);
-	CPXLPptr lp = CPXcreateprob(env, &error, "dual");
+	// CPXENVptr env = CPXopenCPLEX(&error);
+	// CPXLPptr lp = CPXcreateprob(env, &error, "dual");
 
-	CPXaddrows(env, lp, (int) ncols, (int) nrows, nzcnt, cmatval, senses, rmatbeg, rmatind, cmatval, NULL, NULL);
+	// CPXaddrows(env, lp, (int) ncols, (int) nrows, nzcnt, cmatval, senses, rmatbeg, rmatind, cmatval, NULL, NULL);
 
-	for (j = 0; j < ncols; ++j) {
-		CPXchgobj(env, lp, 1, &j, &obj[j]);
-	}
+	// for (j = 0; j < ncols; ++j) {
+	// 	CPXchgobj(env, lp, 1, &j, &obj[j]);
+	// }
 
-	// Maximize
-	CPXchgprobtype(env, lp, CPXPROB_LP);
+	// // Maximize
+	// CPXchgprobtype(env, lp, CPXPROB_LP);
 
-	status = CPXlpopt(env, lp);
-	if (status) { printf("SCdual0_sparse - CPXmipopt error: %d\n", status); }
+	// status = CPXlpopt(env, lp);
+	// if (status) { printf("SCdual0_sparse - CPXmipopt error: %d\n", status); }
 
-	// Dual vector
-	status = CPXgetpi(env, lp, u, 0, (int) (nrows - 1));
-	if (status) { printf("SCdual0_sparse - CPXgetx error: %d\n", status); }
+	// // Dual vector
+	// status = CPXgetpi(env, lp, u, 0, (int) (nrows - 1));
+	// if (status) { printf("SCdual0_sparse - CPXgetx error: %d\n", status); }
 
-	status = CPXgetdj(env, lp, s, 0, (int) (ncols - 1));
-	if (status) { printf("SCdual0_sparse - CPXgetdj error: %d\n", status); }
+	// status = CPXgetdj(env, lp, s, 0, (int) (ncols - 1));
+	// if (status) { printf("SCdual0_sparse - CPXgetdj error: %d\n", status); }
 
+	// CPXfreeprob(env, &lp);
+	// CPXcloseCPLEX(&env);
 
-	CPXfreeprob(env, &lp);
-	CPXcloseCPLEX(&env);
-
-	free(cmatval);
-	free(senses);*/
+	// free(cmatval);
+	// free(senses);
 
 	return 0;
 }
@@ -639,7 +638,7 @@ int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nr
 
 	free(srtrows);
 
-	TERMINATE:
+TERMINATE:
 	return 0;
 }
 
@@ -952,4 +951,4 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 		return p;
 	}
 	return (qnzcnt > p * log2(p)) ? p : -1;
-}
+}*/

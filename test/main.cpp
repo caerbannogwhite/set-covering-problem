@@ -27,9 +27,9 @@ int main()
     obj(3) = 2.0;
 
     x(0) = 1.0;
-    x(1) = 1.0;
+    //x(1) = 1.0;
     x(2) = 1.0;
-    x(3) = 1.0;
+    //x(3) = 1.0;
 
     std::cout << "mat = " << std::endl;
     std::cout << mat << std::endl;
@@ -39,7 +39,18 @@ int main()
     std::cout << "x = " << std::endl;
     std::cout << x << std::endl;
 
-    std::cout << "is x cover = " << baldns_is_cover(mat, x) << std::endl;
+    arma::uvec findMat = arma::find(mat > 0.5);
+    arma::uvec findX = arma::find(x > 0.5);
+
+    std::cout << "find mat =\n";
+    std::cout << findMat << std::endl;
+
+    for (auto it = findX.cbegin(); it != findX.cend(); ++it)
+    {
+        std::cout << *it << std::endl;
+    }
+
+    /*std::cout << "is x cover = " << baldns_is_cover(mat, x) << std::endl;
     std::cout << "removed cols = " << baldns_make_prime_cover(mat, x) << std::endl;
 
     std::cout << "x = " << std::endl;
@@ -53,7 +64,7 @@ int main()
     std::cout << x << std::endl;
 
     std::cout << "mat . x = " << std::endl;
-    std::cout << mat * x << std::endl;
+    std::cout << mat * x << std::endl;*/
 
     return 0;
 }

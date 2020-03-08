@@ -9,8 +9,9 @@
  *	and launches the solver selected by arguments (with the chosen configuration).
  *	The last step prints out some valuable information regarding the computation.
  */
-int SCMILPsolver(SCinstance &inst)
+STATUS SCMILPsolver(SCinstance &inst)
 {
+	STATUS status = SC_SUCCESFULL; 
 	double timeStart, timeEnd;
 	std::vector<std::string> tokens;
 
@@ -142,7 +143,7 @@ int SCMILPsolver(SCinstance &inst)
 	inst.timePresolver = timeEnd - timeStart;
 
 
-	/* ------------------------------- SET PARAMETERS AND SOLVE ----------------------------------------------------- */
+	/* ---------------------- SET PARAMETERS AND SOLVE ------------------------ */
 	if (inst.verbosityLevel > 0)
 	{
 		CPXsetlogfilename(env, "log", &mode);
@@ -172,59 +173,56 @@ int SCMILPsolver(SCinstance &inst)
 	else
 	if (inst.solver.compare("balasbcrule1") == 0)
 	{
-		SCsolverbalasrule1(inst, env, lp);
+		//SCsolverbalasrule1(inst, env, lp);
 	}
 	else if (inst->solver.compare("balasbcrule1-test") == 0)
 	{
-		SCsolverbalasrule1_test(inst, env, lp);
+		//SCsolverbalasrule1_test(inst, env, lp);
 	}
 	else
 	if (inst.solver.compare("balasbcrule1-sparse") == 0)
 	{
-		SCsolverbalasrule1_sparse(inst, env, lp);
-		/*} else if (inst->solver.compare("balasbcrule1maxcol-sparse") == 0) {
-		SCsolverbalasrule1maxcol_sparse(inst, env, lp);*/
+		//SCsolverbalasrule1_sparse(inst, env, lp);
 	}
 	else
 	if (inst.solver.compare("balasbcrule2") == 0)
 	{
-		SCsolverbalasrule2(inst, env, lp);
+		//SCsolverbalasrule2(inst, env, lp);
 	}
 	else
 	if (inst.solver.compare("maxcol") == 0)
 	{
-		SCsolvermaxcol(inst, env, lp);
+		//SCsolvermaxcol(inst, env, lp);
 	}
 	else
 	if (inst.solver.compare("maxcol2") == 0)
 	{
-		SCsolvermaxcol2(inst, env, lp);
+		//SCsolvermaxcol2(inst, env, lp);
 	}
 	else
 	if (inst.solver.compare("maxcol-sparse") == 0)
 	{
-		SCsolvermaxcol_sparse(inst, env, lp);
+		//SCsolvermaxcol_sparse(inst, env, lp);
 	}
 	else
 	if (inst->solver.compare("maxcoldom") == 0)
 	{
-		SCsolvermaxcoldom(inst, env, lp);
+		//SCsolvermaxcoldom(inst, env, lp);
 	}
 	else
 	{
 		std::cerr << "solver unknown." << std::endl;
+		status = SC_SOLVER_NOT_FOUND;
 	}
 	timeEnd = cplex.getCplexTime();
 	inst.timeSolver = timeEnd - timeStart;
 
-	/* ------------------------------- GET SOLUTION ----------------------------------------------------------------- */
-	//ncols = CPXgetnumcols(env, lp);
-	//inst->x_star = (double *) calloc(ncols, sizeof(double));
-	//CPXgetx(env, lp, inst->x_star, 0, ncols - 1);
+	/* ---------------------- GET SOLUTION ------------------------------------ */
 	CPXgetbestobjval(env, lp, &inst->best_obj_val);
 	CPXgetobjval(env, lp, &inst->obj_val);
 
-	/* ------------------------------- CLOSE CPLEX ------------------------------------------------------------------ */
+
+	/* ---------------------- CLOSE CPLEX ------------------------------------- */
 	std::printf("\n");
 	//std::printf("Build time       = %10.4lf\n", inst.timeBuild);
 	std::printf("Presolver time   = %10.4lf\n", inst.timePresolver);
@@ -235,10 +233,7 @@ int SCMILPsolver(SCinstance &inst)
 	std::printf("Node total       = %10d\n", CPXgetnodecnt(env, lp));
 	std::printf("Node left        = %10d\n\n", CPXgetnodeleftcnt(env, lp));
 
-	CPXfreeprob(env, &lp);
-	CPXcloseCPLEX(&env);
-
-	return 0;
+	return status;
 }
 
 /*int SCsolverbalascuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp) {
@@ -267,9 +262,9 @@ int SCMILPsolver(SCinstance &inst)
     free(inst->costs);
 
     return 1;
-}*/
+}
 
-int SCsolverbalascuts(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+int SCsolverbalascuts(SCinstance &inst, IloEnv env, IloCplex cplex)
 {
 	int status;
 
@@ -283,8 +278,8 @@ int SCsolverbalascuts(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
 	if (status)
 	{
-		perror("Unable to get objective");
-		goto TERMINATE;
+		std::cerr << "Unable to get objective" << std::endl;
+		return SC_GENERIC_ERROR;
 	}
 
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
@@ -292,27 +287,20 @@ int SCsolverbalascuts(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	status = CPXsetusercutcallbackfunc(env, SCcallbackbalasusercuts_test, inst);
 	if (status)
 	{
-		perror("Unable to set user cuts callback");
-		goto TERMINATE;
+		std::cerr << "Unable to set user cuts callback" << std::endl;
+		return SC_GENERIC_ERROR;
 	}
 
 	CPXmipopt(env, lp);
 
 	//printf("balas cuts = %d\n", inst->balasnodecnt);
 
-TERMINATE:
-	free(inst->costs);
-
-	return 1;
+	return SC_SUCCESFULL;
 }
 
 int SCsolverbalasrule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
-
-	inst->nsccols = CPXgetnumcols(env, lp);
-	inst->nscrows = CPXgetnumrows(env, lp);
 
 	inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
@@ -321,8 +309,8 @@ int SCsolverbalasrule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	status = CPXgetobj(env, lp, inst->costs, 0, inst->nsccols - 1);
 	if (status)
 	{
-		perror("Unable to get objective");
-		goto TERMINATE;
+		std::cerr << "Unable to get objective" << std::endl;
+		return SC_GENERIC_ERROR;
 	}
 
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
@@ -339,15 +327,11 @@ int SCsolverbalasrule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	//printf("balas node  = %d\n", inst->balasnodecnt);
 	//printf("cplex node  = %d\n", inst->cplexnodecnt);
 
-TERMINATE:
-	free(inst->costs);
-
 	return 1;
 }
 
 int SCsolverbalasrule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
 
 	inst->nsccols = CPXgetnumcols(env, lp);
@@ -378,19 +362,12 @@ int SCsolverbalasrule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	//printf("balas node  = %d\n", inst.balasCntCode);
 	//printf("cplex node  = %d\n", inst.cplexCntNode);
 
-TERMINATE:
-	free(inst->costs);
-
 	return 1;
 }
 
 int SCsolverbalasrule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
-
-	inst->nsccols = CPXgetnumcols(env, lp);
-	inst->nscrows = CPXgetnumrows(env, lp);
 
 	inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
@@ -403,10 +380,10 @@ int SCsolverbalasrule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		goto TERMINATE;
 	}
 
-	/*CPXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
+	//CPXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
 
-	CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
-	CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);*/
+	//CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
+	//CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);
 
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
@@ -422,9 +399,6 @@ int SCsolverbalasrule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	//printf("balas node  = %d\n", inst->balasnodecnt);
 	//printf("cplex node  = %d\n", inst->cplexnodecnt);
 
-TERMINATE:
-	free(inst->costs);
-
 	return 1;
 }
 
@@ -432,9 +406,6 @@ int SCsolverbalasrule1maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp
 {
 
 	int status;
-
-	inst->nsccols = CPXgetnumcols(env, lp);
-	inst->nscrows = CPXgetnumrows(env, lp);
 
 	inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
@@ -447,10 +418,10 @@ int SCsolverbalasrule1maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp
 		goto TERMINATE;
 	}
 
-	/*CPXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
+	//CPXsetintparam(env, CPXPARAM_SolutionType, CPX_NONBASIC_SOLN);
 
-	CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
-	CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);*/
+	//CPXsetintparam(env, CPX_PARAM_STARTALG, CPX_ALG_DUAL);
+	//CPXsetintparam(env, CPX_PARAM_SUBALG, CPX_ALG_DUAL);
 
 	CPXXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
@@ -466,19 +437,12 @@ int SCsolverbalasrule1maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp
 	//printf("balas node  = %d\n", inst->balasnodecnt);
 	//printf("cplex node  = %d\n", inst->cplexnodecnt);
 
-TERMINATE:
-	free(inst->costs);
-
 	return 1;
 }
 
 int SCsolverbalasrule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
-
-	inst->nsccols = CPXgetnumcols(env, lp);
-	inst->nscrows = CPXgetnumrows(env, lp);
 
 	CPXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
 	CPXsetintparam(env, CPX_PARAM_REDUCE, 1);
@@ -499,7 +463,6 @@ int SCsolverbalasrule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 
 int SCsolvermaxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
 
 	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
@@ -525,14 +488,11 @@ int SCsolvermaxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 
 	CPXmipopt(env, lp);
 
-TERMINATE:
-	free(inst->costs);
 	return 1;
 }
 
 int SCsolvermaxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
 
 	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
@@ -554,14 +514,11 @@ int SCsolvermaxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 
 	CPXmipopt(env, lp);
 
-TERMINATE:
-	free(inst->costs);
 	return 1;
 }
 
 int SCsolvermaxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
 
 	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
@@ -583,14 +540,11 @@ int SCsolvermaxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 
 	CPXmipopt(env, lp);
 
-TERMINATE:
-	free(inst->costs);
 	return 1;
 }
 
 int SCsolvermaxcoldom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-
 	int status;
 
 	inst->costs = (double *)malloc(CPXgetnumcols(env, lp) * sizeof(double));
@@ -612,7 +566,5 @@ int SCsolvermaxcoldom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 
 	CPXmipopt(env, lp);
 
-TERMINATE:
-	free(inst->costs);
 	return 1;
-}
+}*/

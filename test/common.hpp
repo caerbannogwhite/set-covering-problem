@@ -1,4 +1,5 @@
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <math.h>
@@ -6,9 +7,12 @@
 #include <stdio.h>
 #include <string>
 #include <time.h>
+#include <set>
+#include <unordered_set>
+#include <vector>
 
 #include <armadillo>
-
+#include "catch.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 

@@ -3,7 +3,7 @@
 #include "balas_sparse.hpp"
 #include "callbacks.hpp"
 
-int CPXPUBLIC SCcallbackbalasusercuts_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
+/*int CPXPUBLIC SCcallbackbalasusercuts_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
         int *useraction_p) {
 
     char sense;
@@ -15,7 +15,7 @@ int CPXPUBLIC SCcallbackbalasusercuts_sparse(CPXCENVptr env, void *cbdata, int w
 
     CPXCLPptr lp;
 
-    /*CPXgetcallbacklp(env, cbdata, wherefrom, &lp);
+    CPXgetcallbacklp(env, cbdata, wherefrom, &lp);
 
     // Get reduced matrix and objective
     ncols = CPXgetnumcols(env, lp);
@@ -228,7 +228,7 @@ int CPXPUBLIC SCcallbackbalasusercuts_sparse(CPXCENVptr env, void *cbdata, int w
     CPXcutcallbackaddlocal(env, cbdata, wherefrom, nzcnt, &rhs, &sense, cutind, cutval);
 
     free(cutind);
-    free(cutval);*/
+    free(cutval);
 
     TERMINATE:
     return status;
@@ -363,7 +363,7 @@ int CPXPUBLIC SCcallbackbalasusercuts(CPXCENVptr env, void *cbdata, int wherefro
 
 	TERMINATE:
 	return status;
-} /* END SCcallbackbalasusercuts */
+} // END SCcallbackbalasusercuts
 
 
 int CPXPUBLIC SCcallbackbalasusercuts_test(CPXCENVptr env, void *cbdata, int wherefrom,
@@ -519,7 +519,7 @@ int CPXPUBLIC SCcallbackbalasusercuts_test(CPXCENVptr env, void *cbdata, int whe
 
 	TERMINATE:
 	return status;
-} /* END SCcallbackbalasusercuts_test */
+} // END SCcallbackbalasusercuts_test
 
 
 int CPXPUBLIC SCcallbackbranchmaxcol(CPXCENVptr env, void *cbdata,
@@ -663,7 +663,7 @@ int CPXPUBLIC SCcallbackbranchmaxcol(CPXCENVptr env, void *cbdata,
 	free(mat);
 
 	return status;
-} /* END SCcallbackbranchmaxcol */
+} // END SCcallbackbranchmaxcol
 
 
 int CPXPUBLIC SCcallbackbranchmaxcol2(CPXCENVptr env, void *cbdata,
@@ -824,7 +824,7 @@ int CPXPUBLIC SCcallbackbranchmaxcol2(CPXCENVptr env, void *cbdata,
 	free(mat);
 
 	return status;
-} /* END SCcallbackbranchmaxcol */
+} // END SCcallbackbranchmaxcol
 
 
 int CPXPUBLIC SCcallbackbranchmaxcol_sparse(CPXCENVptr env, void *cbdata,
@@ -977,7 +977,7 @@ int CPXPUBLIC SCcallbackbranchmaxcol_sparse(CPXCENVptr env, void *cbdata,
 	free(rmatindred);
 
 	return status;
-} /* END SCcallbackbranchmaxcol_sparse */
+} // END SCcallbackbranchmaxcol_sparse
 
 
 int CPXPUBLIC SCcallbackbranchmaxcoldom(CPXCENVptr env, void *cbdata,
@@ -1272,7 +1272,7 @@ int CPXPUBLIC SCcallbackbranchmaxcoldom(CPXCENVptr env, void *cbdata,
 	free(rmatindred);
 
 	return status;
-} /* END SCcallbackbranchmaxcoldom */
+} // END SCcallbackbranchmaxcoldom
 
 
 int CPXPUBLIC SCcallbackbalasbranchrule1v1(CPXCENVptr env, void *cbdata,
@@ -1446,7 +1446,7 @@ int CPXPUBLIC SCcallbackbalasbranchrule1v1(CPXCENVptr env, void *cbdata,
 
 	TERMINATE:
 	return status;
-} /* END SCcallbackbalasbranchrule1 */
+} // END SCcallbackbalasbranchrule1
 
 
 int CPXPUBLIC SCcallbackbalasbranchrule1_test(CPXCENVptr env, void *cbdata,
@@ -1650,7 +1650,7 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_test(CPXCENVptr env, void *cbdata,
 
 	TERMINATE:
 	return status;
-} /* END SCcallbackbalasbranchrule1_test */
+} // END SCcallbackbalasbranchrule1_test
 
 
 int CPXPUBLIC SCcallbackbalasbranchrule1_sparse(CPXCENVptr env, void *cbdata,
@@ -1846,18 +1846,18 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_sparse(CPXCENVptr env, void *cbdata,
 	}
 
 	// Check if is dual solution
-	/*double acc;
-	for (j = 0; j < ncolsred; ++j) {
-		acc = 0.0;
-		for (i = cmatbegred[j]; i < cmatbegred[j+1]; ++i) {
-			acc += pi[cmatindred[i]];
-		}
+	// double acc;
+	// for (j = 0; j < ncolsred; ++j) {
+	// 	acc = 0.0;
+	// 	for (i = cmatbegred[j]; i < cmatbegred[j+1]; ++i) {
+	// 		acc += pi[cmatindred[i]];
+	// 	}
 
-		if ((acc - SC_EPSILON_SMALL) > objred[j]) {
-			printf("NOT DUAL SOLUTION. acc=%lf, obj=%lf\n", acc, objred[j]);
-			break;
-		}
-	}*/
+	// 	if ((acc - SC_EPSILON_SMALL) > objred[j]) {
+	// 		printf("NOT DUAL SOLUTION. acc=%lf, obj=%lf\n", acc, objred[j]);
+	// 		break;
+	// 	}
+	// }
 
 	for (j = 0; j < ncolsred; ++j) {
 		dj[j] = objred[j];
@@ -1869,12 +1869,12 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_sparse(CPXCENVptr env, void *cbdata,
 		}
 	}
 
-	/*for (j = 0; j < ncolsred; ++j) {
-		if (dj[j] < -SC_EPSILON_SMALL) {
-			printf("NOT VALID REDUCED COST. dj=%lf, j=%d\n", dj[j], j);
-			break;
-		}
-	}*/
+	// for (j = 0; j < ncolsred; ++j) {
+	// 	if (dj[j] < -SC_EPSILON_SMALL) {
+	// 		printf("NOT VALID REDUCED COST. dj=%lf, j=%d\n", dj[j], j);
+	// 		break;
+	// 	}
+	// }
 
 	//SCbalasheurdual1_sparse(rmatbegred, rmatindred, nrowsred, xind, xindlen, pi, dj);
 	//SCdual0_sparse(rmatbegred, rmatindred, objred, nrowsred, ncolsred, pi, dj);
@@ -1958,7 +1958,7 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_sparse(CPXCENVptr env, void *cbdata,
 
 	TERMINATE:
 	return status;
-} /* END SCcallbackbalasbranchrule1_sparse */
+} // END SCcallbackbalasbranchrule1_sparse
 
 
 int CPXPUBLIC SCcallbackbalasbranchrule1maxcol_sparse(CPXCENVptr env, void *cbdata,
@@ -2307,7 +2307,7 @@ int CPXPUBLIC SCcallbackbalasbranchrule1maxcol_sparse(CPXCENVptr env, void *cbda
 
 	TERMINATE:
 	return status;
-} /* END SCcallbackbalasbranchrule1maxcol_sparse */
+} // END SCcallbackbalasbranchrule1maxcol_sparse
 
 
 int CPXPUBLIC SCcallbackbalasbranchrule2(CPXCENVptr env, void *cbdata,
@@ -2565,7 +2565,7 @@ int CPXPUBLIC SCcallbackbalasbranchrule2(CPXCENVptr env, void *cbdata,
 	free(rmatindred);
 
 	return status;
-} /* END SCcallbackbalasbranchrule2 */
+} // END SCcallbackbalasbranchrule2
 
 
 char *SCgetmatrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
@@ -3140,3 +3140,4 @@ int SCmakebalasbranchrule1v1_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
 
 	return (status);
 }
+*/
