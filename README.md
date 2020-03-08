@@ -11,14 +11,15 @@ The software requires the following software:
 - [CPLEX](https://www.ibm.com/analytics/cplex-optimizer)
 - [Boost](https://www.boost.org/)
 - [Armadillo](http://arma.sourceforge.net/)
-- [OpenBLAS](http://www.openblas.net/)
-- [ARPACK](https://www.caam.rice.edu/software/ARPACK/)
-- [LAPACK](https://github.com/Reference-LAPACK/lapack)
-- [SuperLU](https://github.com/xiaoyeli/superlu)
+- [OpenBLAS](http://www.openblas.net/) (required by Armadillo)
+- [ARPACK](https://www.caam.rice.edu/software/ARPACK/) (required by Armadillo)
+- [LAPACK](https://github.com/Reference-LAPACK/lapack) (required by Armadillo)
+- [SuperLU](https://github.com/xiaoyeli/superlu) (required by Armadillo)
 
-On Ubuntu or Debian, you should run
+To install the last four libraries (required by Armadillo), on Ubuntu or Debian, you can run the
+following command:
 
-sudo apt install cmake libopenblas-dev liblapack-dev libarpack2-dev libsuperlu-dev
+`sudo apt install cmake libopenblas-dev liblapack-dev libarpack2-dev libsuperlu-dev`
 
 Once you have installed them in your computer, you should change the `CPLEX_HOME` and the `BOOST_HOME` variables in `Makefile`.
 
