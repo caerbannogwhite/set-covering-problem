@@ -1,15 +1,182 @@
+
 #define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
+#include "balas_dense.hpp"
 
-unsigned int Factorial(unsigned int number)
+TEST_CASE("BALAS DENSE - baldns_is_cover", "[BALAS DENSE]")
 {
-    return number <= 1 ? number : Factorial(number - 1) * number;
+    arma::mat mat = arma::mat(4, 4);
+    arma::vec x = arma::vec(4);
+
+    // matrix
+    //      1 1 0 1
+    //      0 1 1 0
+    //      1 0 1 0
+    //      1 0 0 1
+    mat(0, 0) = 1.0;
+    mat(0, 1) = 1.0;
+    mat(0, 3) = 1.0;
+    mat(1, 1) = 1.0;
+    mat(1, 2) = 1.0;
+    mat(2, 0) = 1.0;
+    mat(2, 2) = 1.0;
+    mat(3, 0) = 1.0;
+    mat(3, 3) = 1.0;
+
+    // COVER
+    // x = [1, 1, 0, 0]
+    x(0) = 1.0;
+    x(1) = 1.0;
+    x(2) = 0.0;
+    x(3) = 0.0;
+    REQUIRE(baldns_is_cover(mat, x));
+
+    // x = [1, 0, 1, 0]
+    x(0) = 1.0;
+    x(1) = 0.0;
+    x(2) = 1.0;
+    x(3) = 0.0;
+    REQUIRE(baldns_is_cover(mat, x));
+
+    // x = [0, 0, 1, 1]
+    x(0) = 0.0;
+    x(1) = 0.0;
+    x(2) = 1.0;
+    x(3) = 1.0;
+    REQUIRE(baldns_is_cover(mat, x));
+
+    // x = [1, 1, 1, 0]
+    x(0) = 1.0;
+    x(1) = 1.0;
+    x(2) = 1.0;
+    x(3) = 0.0;
+    REQUIRE(baldns_is_cover(mat, x));
+
+    // x = [1, 1, 0, 1]
+    x(0) = 1.0;
+    x(1) = 1.0;
+    x(2) = 0.0;
+    x(3) = 1.0;
+    REQUIRE(baldns_is_cover(mat, x));
+
+    // x = [0, 1, 1, 1]
+    x(0) = 0.0;
+    x(1) = 1.0;
+    x(2) = 1.0;
+    x(3) = 1.0;
+    REQUIRE(baldns_is_cover(mat, x));
+
+    // x = [1, 1, 1, 1]
+    x(0) = 1.0;
+    x(1) = 1.0;
+    x(2) = 1.0;
+    x(3) = 1.0;
+    REQUIRE(baldns_is_cover(mat, x));
+
+    // NOT COVER
+    // x = [1, 0, 0, 0]
+    x(0) = 1.0;
+    x(1) = 0.0;
+    x(2) = 0.0;
+    x(3) = 0.0;
+    REQUIRE(!baldns_is_cover(mat, x));
+
+    // x = [0, 1, 0, 0]
+    x(0) = 0.0;
+    x(1) = 1.0;
+    x(2) = 0.0;
+    x(3) = 0.0;
+    REQUIRE(!baldns_is_cover(mat, x));
+
+    // x = [0, 1, 1, 0]
+    x(0) = 0.0;
+    x(1) = 1.0;
+    x(2) = 1.0;
+    x(3) = 0.0;
+    REQUIRE(!baldns_is_cover(mat, x));
+
+    // x = [0, 1, 0, 1]
+    x(0) = 0.0;
+    x(1) = 1.0;
+    x(2) = 0.0;
+    x(3) = 1.0;
+    REQUIRE(!baldns_is_cover(mat, x));
 }
 
-TEST_CASE("Factorials are computed", "[factorial]")
+TEST_CASE("BALAS DENSE - baldns_make_prime_cover", "[BALAS DENSE]")
 {
-    REQUIRE(Factorial(1) == 1);
-    REQUIRE(Factorial(2) == 2);
-    REQUIRE(Factorial(3) == 6);
-    REQUIRE(Factorial(10) == 3628800);
+    double objVal;
+    arma::mat mat = arma::mat(4, 4);
+    arma::vec obj = arma::vec(4);
+    arma::vec x = arma::vec(4);
+
+    // matrix
+    //      1 1 0 1
+    //      0 1 1 0
+    //      1 0 1 0
+    //      1 0 0 1
+    mat(0, 0) = 1.0;
+    mat(0, 1) = 1.0;
+    mat(0, 3) = 1.0;
+    mat(1, 1) = 1.0;
+    mat(1, 2) = 1.0;
+    mat(2, 0) = 1.0;
+    mat(2, 2) = 1.0;
+    mat(3, 0) = 1.0;
+    mat(3, 3) = 1.0;
+
+    obj(0) = 1.0;
+    obj(1) = 1.0;
+    obj(2) = 1.0;
+    obj(3) = 2.0;
+
+    x(0) = 1.0;
+    x(1) = 1.0;
+    x(2) = 1.0;
+    x(3) = 1.0;
+
+    baldns_make_prime_cover(mat, x);
+    objVal = arma::dot(obj, x);
+
+    REQUIRE(baldns_is_cover(mat, x));
+    REQUIRE(fabs(objVal - 2.0) < SC_EPSILON_SMALL);
+    REQUIRE(fabs(x(2)) < SC_EPSILON_SMALL);
+    REQUIRE(fabs(x(3)) < SC_EPSILON_SMALL);
+}
+
+TEST_CASE("BALAS DENSE - baldns_heur_primal_0", "[BALAS DENSE]")
+{
+    double objVal;
+    arma::mat mat = arma::mat(4, 4);
+    arma::vec obj = arma::vec(4);
+    arma::vec x = arma::vec(4);
+
+    // matrix
+    //      1 1 0 1
+    //      0 1 1 0
+    //      1 0 1 0
+    //      1 0 0 1
+    mat(0, 0) = 1.0;
+    mat(0, 1) = 1.0;
+    mat(0, 3) = 1.0;
+    mat(1, 1) = 1.0;
+    mat(1, 2) = 1.0;
+    mat(2, 0) = 1.0;
+    mat(2, 2) = 1.0;
+    mat(3, 0) = 1.0;
+    mat(3, 3) = 1.0;
+
+    obj(0) = 1.0;
+    obj(1) = 1.0;
+    obj(2) = 1.0;
+    obj(3) = 2.0;
+
+    x(0) = 0.0;
+    x(1) = 0.0;
+    x(2) = 0.0;
+    x(3) = .0;
+
+    baldns_heur_primal_0(mat, obj, x, 3);
+
+    std::cout << x << std::endl;
 }

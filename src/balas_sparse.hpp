@@ -4,25 +4,28 @@
 
 #include "common.hpp"
 
-int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg,
-						const int *cmatind, int nrows, int ncols, int *xind,
-						int xindlen);
+int balspr_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::set<int> &wSet);
 
-double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
-								 const double *obj, int nrows, int ncols, int *xind, int *xindlen,
-								 int whichfunc);
+int balspr_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::set<int>> branchSet, const int maxBranch, const int maxSingl);
 
-int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, int nrows,
-				   int ncols, double *u, double *s);
+int balspr_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::unordered_set<int>> branchSet, const int maxBranch, const int maxSingl);
 
-int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, int nrows, const int *xind,
-							int xindlen, double *u, double *s);
+int balspr_over_sat_rows(arma::mat &mat, arma::vec &x);
 
-int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, int nrows,
-							const int *xind, int xindlen, double *u, double *s, double zu);
+int balspr_make_prime_cover(const arma::mat &mat, arma::vec &x);
 
-int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
-							  int nrows, int ncols, const int *xind, int xindlen, double *dj,
-							  double zu, double y, int *rqbeg, int *rqind, int max_branch, int max_singl);
+bool balspr_is_cover(const arma::mat &mat, arma::vec &x);
+
+double balspr_heur_primal_0(arma::mat &mat, arma::vec &obj, arma::vec &x, const int whichFunc);
+
+double balspr_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x);
+
+double balspr_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x, arma::vec &s, arma::vec &u);
+
+bool balspr_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u);
+
+int balspr_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s);
+
+int balspr_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s, const double zUpp);
 
 #endif //SC_BALAS_SPARSE_H

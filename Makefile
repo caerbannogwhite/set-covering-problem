@@ -5,7 +5,7 @@ CPLEX_HOME=/opt/ibm/ILOG/CPLEX_Studio128
 BOOST_HOME=/usr/local/boost_1_71_0
 
 CC=g++
-CFLAGS=-Wall -O2 -DIL_STD
+CFLAGS=-g -Wall -O2 -fpermissive -DIL_STD
 
 LDLIBS=-L$(CPLEX_HOME)/cplex/lib/x86-64_linux/static_pic -L$(CPLEX_HOME)/concert/lib/x86-64_linux/static_pic -lcplex -L$(BOOST_HOME)/stage/lib -lboost_program_options -lm -lpthread -ldl -larmadillo
 INC=-I$(CPLEX_HOME)/cplex/include/ -I$(CPLEX_HOME)/concert/include/ -I$(BOOST_HOME)

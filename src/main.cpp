@@ -161,8 +161,8 @@ int main_read_instance_dns(SCinstance &inst)
 	// read number of rows and columns
 	fileHandler >> m >> n;
 
-	inst.obj = ublas::vector<double>(n);
-	inst.dnsmat = ublas::matrix<double>(m, n);
+	inst.obj = arma::vec(n);
+	inst.dnsmat = arma::mat(m, n);
 
 	// read objective values
 	for (auto it = inst.obj.begin(); it != inst.obj.end(); ++it)
@@ -177,28 +177,17 @@ int main_read_instance_dns(SCinstance &inst)
 		for (j = 0; j < nz; ++j)
 		{
 			fileHandler >> col;
-			inst.dnsmat(i, col) = 1.0;
+			inst.dnsmat(i, col - 1) = 1.0;
 		}
 	}
 	fileHandler.close();
 
 	// DEBUG: print this instance
-	std::cout << "obj = ";
-	for (auto it = inst.obj.cbegin(); it != inst.obj.cend(); ++it)
-	{
-		std::cout << *it << " ";
-	}
-	std::cout << std::endl;
+	std::cout << "obj =\n";
+	std::cout << inst.obj << std::endl;
 
-	std::cout << "mat = " << std::endl;
-	for (auto it = inst.dnsmat.cbegin1(); it != inst.dnsmat.cend1(); ++it)
-	{
-		for (auto jt = it.cbegin(); jt != it.cend(); ++jt)
-		{
-			std::cout << *jt << " ";
-		}
-		std::cout << std::endl;
-	}
+	std::cout << "mat =\n";
+	std::cout << inst.dnsmat << std::endl;
 
 	return SC_SUCCESFULL;
 }

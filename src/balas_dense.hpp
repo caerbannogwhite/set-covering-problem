@@ -4,53 +4,28 @@
 
 #include "common.hpp"
 
-int SCbalascutprocedure(char *mat, int nrows, int ncols,
-						const char *x, double *s, double zu, double y,
-						int *cutind);
+int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::set<int> &wSet);
 
-int SCdual0(const char *mat, double *obj, int nrows,
-			int ncols, double *u, double *s);
+int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::set<int>> branchSet, const int maxBranch, const int maxSingl);
 
-int SCbalasbranchrule1(char *mat, int nrows, int ncols,
-					   const char *x, double *s, double zu, double y,
-					   char *qmat, int max_branch, int max_singl);
+int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::unordered_set<int>> branchSet, const int maxBranch, const int maxSingl);
 
-int SCbalasbranchrule1_test(char *mat, int nrows, int ncols,
-							const char *x, double *s, double zu, double y,
-							char *qmat, int max_branch, int max_singl);
+int baldns_over_sat_rows(arma::mat &mat, arma::vec &x);
 
-int SCprimecover(const char *mat, int nrows,
-				 int ncols, char *x);
+int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x);
 
-int SCoversatrows(char *mat, int nrows,
-				  int ncols, char *x, int *xsupp,
-				  int *xsupplen_p);
+bool baldns_is_cover(const arma::mat &mat, arma::vec &x);
 
-int SCiscover(char *mat, int nrows,
-			  int ncols, const char *x);
+double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj, arma::vec &x, const int whichFunc);
 
-double SCbalasheurprimal0(char *mat, const double *costs,
-						  int nrows, int ncols,
-						  char *x, int *xsupp, int *xsupplen,
-						  int whichfunc);
+double baldns_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x);
 
-double SCbalasheurprimal12(char *mat, const double *costs,
-						   int nrows, int ncols,
-						   char *x, int *xsupp, int *xsupplen_p);
+double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x, arma::vec &s, arma::vec &u);
 
-double SCbalasheurprimal5b(char *mat, const double *costs,
-						   int nrows, int ncols, char *x,
-						   double *u, double *s);
+bool baldns_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u);
 
-int SCisdualsolution(const char *mat, const double *obj,
-					 int nrows, int ncols, double *u);
+int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s);
 
-int SCbalasheurdual1(char *mat,
-					 int nrows, int ncols,
-					 const char *x, double *u, double *s);
-
-int SCbalasheurdual3(char *mat,
-					 int nrows, int ncols,
-					 const char *x, double *u, double *s, double zu);
+int baldns_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s, const double zUpp);
 
 #endif //SC_BALAS_DENSE_H
