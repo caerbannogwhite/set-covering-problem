@@ -3,10 +3,10 @@
 #include "balas_sparse.hpp"
 #include "callbacks.hpp"
 
-/*int CPXPUBLIC SCcallbackbalasusercuts_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
+int CPXPUBLIC callbacks_balas_usercuts_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
         int *useraction_p) {
 
-    char sense;
+    /*char sense;
     int nrows, ncols, numnz, nzcnt, status, i, j, cnt, nzcnt_tmp, surplus;
     int nrowsred, ncolsred, numnzred, flag;
     int *rmatbeg, *rmatind, *rmatbegred, *rmatindred, *cutind, *colsred2sc, *colssc2red, *rowsred2sc, *rowssc2red;
@@ -230,15 +230,14 @@
     free(cutind);
     free(cutval);
 
-    TERMINATE:
-    return status;
-}
+    TERMINATE:*/
+    return 0;
+} // END: callbacks_balas_usercuts_sparse
 
-
-int CPXPUBLIC SCcallbackbalasusercuts(CPXCENVptr env, void *cbdata, int wherefrom,
+int CPXPUBLIC callbacks_balas_usercuts(CPXCENVptr env, void *cbdata, int wherefrom,
 		void *cbhandle, int *useraction_p) {
 
-	char *mat, *xchr;
+	/*char *mat, *xchr;
 	int ncolsred, nrowsred, ncols, nrows, nodedepth, status = 0;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *xsupp;
 	int i, j, xsupplen;
@@ -361,15 +360,14 @@ int CPXPUBLIC SCcallbackbalasusercuts(CPXCENVptr env, void *cbdata, int wherefro
 	free(cutind);
 	free(cutval);
 
-	TERMINATE:
-	return status;
-} // END SCcallbackbalasusercuts
+	TERMINATE:*/
+	return 0;
+} // END callbacks_balas_usercuts
 
-
-int CPXPUBLIC SCcallbackbalasusercuts_test(CPXCENVptr env, void *cbdata, int wherefrom,
+int CPXPUBLIC callbacks_balas_usercuts_test(CPXCENVptr env, void *cbdata, int wherefrom,
 		void *cbhandle, int *useraction_p) {
 
-	char *mat, *xchr;
+	/*char *mat, *xchr;
 	int off, ncolsred, nrowsred, ncols, nrows, nodedepth, status = 0;
 	int *rowsred2sc, *rowssc2red, *colsred2sc, *colssc2red, *xsupp;
 	int i, j, xsupplen;
@@ -517,12 +515,12 @@ int CPXPUBLIC SCcallbackbalasusercuts_test(CPXCENVptr env, void *cbdata, int whe
 	free(cutind);
 	free(cutval);
 
-	TERMINATE:
-	return status;
-} // END SCcallbackbalasusercuts_test
+	TERMINATE:*/
+	return 0;
+} // END callbacks_balas_usercuts_test
 
 
-int CPXPUBLIC SCcallbackbranchmaxcol(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_branch_maxcol(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -662,17 +660,16 @@ int CPXPUBLIC SCcallbackbranchmaxcol(CPXCENVptr env, void *cbdata,
 	free(colssc2red);
 	free(mat);
 
-	return status;
-} // END SCcallbackbranchmaxcol
+	return 0;
+} // END callbacks_branch_maxcol
 
-
-int CPXPUBLIC SCcallbackbranchmaxcol2(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_branch_maxcol2(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 	// Silence compiler warning(s) about unused parameter(s).
-	(void) cbhandle;
+	/*(void) cbhandle;
 	(void) brtype;
 	(void) sos;
 	(void) nodecnt;
@@ -821,19 +818,18 @@ int CPXPUBLIC SCcallbackbranchmaxcol2(CPXCENVptr env, void *cbdata,
 
 	free(colsred2sc);
 	free(colssc2red);
-	free(mat);
+	free(mat);*/
 
-	return status;
-} // END SCcallbackbranchmaxcol
+	return 0;
+} // END callbacks_branch_maxcol2
 
-
-int CPXPUBLIC SCcallbackbranchmaxcol_sparse(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_branch_maxcol_sparse(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 // Silence compiler warning(s) about unused parameter(s).
-	(void) cbhandle;
+	/*(void) cbhandle;
 	(void) brtype;
 	(void) sos;
 	(void) nodecnt;
@@ -974,19 +970,18 @@ int CPXPUBLIC SCcallbackbranchmaxcol_sparse(CPXCENVptr env, void *cbdata,
 	free(colssc2red);
 
 	free(rmatbegred);
-	free(rmatindred);
+	free(rmatindred);*/
 
-	return status;
-} // END SCcallbackbranchmaxcol_sparse
+	return 0;
+} // END callbacks_branch_maxcol_sparse
 
-
-int CPXPUBLIC SCcallbackbranchmaxcoldom(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callback_branch_maxcol_dom(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 	// Silence compiler warning(s) about unused parameter(s).
-	(void) brtype;
+	/*(void) brtype;
 	(void) sos;
 	(void) nodecnt;
 	(void) bdcnt;
@@ -1269,19 +1264,18 @@ int CPXPUBLIC SCcallbackbranchmaxcoldom(CPXCENVptr env, void *cbdata,
 	free(rowssc2red);
 
 	free(rmatbegred);
-	free(rmatindred);
+	free(rmatindred);*/
 
-	return status;
-} // END SCcallbackbranchmaxcoldom
+	return 0;
+} // END callback_branch_maxcol_dom
 
-
-int CPXPUBLIC SCcallbackbalasbranchrule1v1(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_balas_branch_rule1v1(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 	// Silence compiler warning(s) about unused parameter(s).
-	(void) brtype;
+	/*(void) brtype;
 	(void) sos;
 	(void) nodecnt;
 	(void) bdcnt;
@@ -1444,18 +1438,17 @@ int CPXPUBLIC SCcallbackbalasbranchrule1v1(CPXCENVptr env, void *cbdata,
 	free(pi);
 	free(qmatred);
 
-	TERMINATE:
-	return status;
-} // END SCcallbackbalasbranchrule1
+	TERMINATE:*/
+	return 0;
+} // END callbacks_balas_branch_rule1v1
 
-
-int CPXPUBLIC SCcallbackbalasbranchrule1_test(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_balas_branch_rule1_test(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 	// Silence compiler warning(s) about unused parameter(s).
-	(void) brtype;
+	/*(void) brtype;
 	(void) sos;
 	(void) nodecnt;
 	(void) bdcnt;
@@ -1648,18 +1641,17 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_test(CPXCENVptr env, void *cbdata,
 	free(pi);//printf("ok08\n");
 	free(qmatred);//printf("ok09\n");
 
-	TERMINATE:
-	return status;
-} // END SCcallbackbalasbranchrule1_test
+	TERMINATE:*/
+	return 0;
+} // END callbacks_balas_branch_rule1_test
 
-
-int CPXPUBLIC SCcallbackbalasbranchrule1_sparse(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_balas_branch_rule1_sparse(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 	// Silence compiler warning(s) about unused parameter(s).
-	(void) brtype;
+	/*(void) brtype;
 	(void) sos;
 	(void) nodecnt;
 	(void) bdcnt;
@@ -1956,18 +1948,17 @@ int CPXPUBLIC SCcallbackbalasbranchrule1_sparse(CPXCENVptr env, void *cbdata,
 
 	free(objred);
 
-	TERMINATE:
-	return status;
-} // END SCcallbackbalasbranchrule1_sparse
+	TERMINATE:*/
+	return 0;
+} // END callbacks_balas_branch_rule1_sparse
 
-
-int CPXPUBLIC SCcallbackbalasbranchrule1maxcol_sparse(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_balas_branch_rule1_maxcol_sparse(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 	// Silence compiler warning(s) about unused parameter(s).
-	(void) brtype;
+	/*(void) brtype;
 	(void) sos;
 	(void) nodecnt;
 	(void) bdcnt;
@@ -2305,18 +2296,17 @@ int CPXPUBLIC SCcallbackbalasbranchrule1maxcol_sparse(CPXCENVptr env, void *cbda
 
 	free(objred);
 
-	TERMINATE:
-	return status;
-} // END SCcallbackbalasbranchrule1maxcol_sparse
+	TERMINATE:*/
+	return 0;
+} // END callbacks_balas_branch_rule1_maxcol_sparse
 
-
-int CPXPUBLIC SCcallbackbalasbranchrule2(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC callbacks_balas_branch_rule2(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
 
 	// Silence compiler warning(s) about unused parameter(s).
-	(void) brtype;
+	/*(void) brtype;
 	(void) sos;
 	(void) nodecnt;
 	(void) bdcnt;
@@ -2562,19 +2552,18 @@ int CPXPUBLIC SCcallbackbalasbranchrule2(CPXCENVptr env, void *cbdata,
 	free(colssc2red);
 
 	free(rmatbegred);
-	free(rmatindred);
+	free(rmatindred);*/
 
-	return status;
-} // END SCcallbackbalasbranchrule2
+	return 0;
+} // END callbacks_balas_branch_rule2
 
-
-char *SCgetmatrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
+char *callbacks_get_matrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
 		int *rowssc2red, int *colsred2sc, int *colssc2red, int *nrowsred,
 		int *ncolsred) {
 
 	char flag;
 	char *mat, *matr;
-	int cnt, nrows, ncols, numnz, status, nzcnt_tmp, surplus;
+	/*int cnt, nrows, ncols, numnz, status, nzcnt_tmp, surplus;
 	int *rmatbeg, *rmatind;
 	int i, j, k, l;
 	double *ub, *lb, *rmatval;
@@ -2648,16 +2637,15 @@ char *SCgetmatrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
 
 	free(rmatbeg);
 	free(rmatind);
-	free(rmatval);
+	free(rmatval);*/
 
 	return mat;
-}
+} // END: callbacks_get_matrix
 
-
-int SCmakecplexbranch(CPXCENVptr env, void *cbdata, int wherefrom,
+int callbacks_make_cplex_branch(CPXCENVptr env, void *cbdata, int wherefrom,
 		int ncols, SCinstance *inst) {
 
-	int status = 0;
+	/*int status = 0;
 
 	SCnodedata *data1 = (SCnodedata *) malloc(sizeof(SCnodedata));
 	data1->ncols = ncols;
@@ -2675,16 +2663,15 @@ int SCmakecplexbranch(CPXCENVptr env, void *cbdata, int wherefrom,
 
 	status = CPXbranchcallbackbranchasCPLEX(env, cbdata, wherefrom, 1, data2, &data2->seqnum);
 	if (status) { perror("Can't make CPLEX branch 2"); status = CPXERR_CALLBACK; }
-	inst->cplexnodecnt++;
+	inst->cplexnodecnt++;*/
 
-	return status;
-}
+	return 0;
+} // END: callbacks_make_cplex_branch
 
-
-int SCmakebalasbranchrule1v1(CPXCENVptr env, void *cbdata, int wherefrom,
+int callbacks_make_balas_branch_rule1v1(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, char *qmat, int p, int ncols, int q,
 		SCinstance *inst) {
-	char *varlu;
+	/*char *varlu;
 	int i, j, nbrvars, off;
 	int * varind;
 	double *varbd;
@@ -2805,16 +2792,15 @@ int SCmakebalasbranchrule1v1(CPXCENVptr env, void *cbdata, int wherefrom,
 	TERMINATE:
 	free(varind);
 	free(varlu);
-	free(varbd);
+	free(varbd);*/
 
-	return (status);
-}
+	return 0;
+} // END: callbacks_make_balas_branch_rule1v1
 
-
-int SCmakebalasbranchrule1v2(CPXCENVptr env, void *cbdata, int wherefrom,
+int callbacks_make_balas_branch_rule1v2(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, char *qmat, int p, int ncols, int q,
 		SCinstance *inst) {
-	char *varlu;
+	/*char *varlu;
 	int i, j, nbrvars, off;
 	int * varind;
 	double *varbd;
@@ -2894,17 +2880,16 @@ int SCmakebalasbranchrule1v2(CPXCENVptr env, void *cbdata, int wherefrom,
 	TERMINATE:
 	free(varind);
 	free(varlu);
-	free(varbd);
+	free(varbd);*/
 
-	return (status);
-}
+	return 0;
+} // END: callbacks_make_balas_branch_rule1v2
 
-
-int SCmakebalasbranchrule2(CPXCENVptr env, void *cbdata, int wherefrom,
+int callbacks_make_balas_branch_rule2(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, char *mat, int nrows, int ncols,
 		const int *colsred2sc, SCinstance *inst) {
 
-	char cond, flag;
+	/*char cond, flag;
 	char *varlu;
 	char *matr, *mati;
 	int it, ht, status;
@@ -3016,17 +3001,16 @@ int SCmakebalasbranchrule2(CPXCENVptr env, void *cbdata, int wherefrom,
 	free(varindsc);
 	free(varindred);
 	free(varlu);
-	free(varbd);
+	free(varbd);*/
 
 	return 0;
-}
+} // END: callbacks_make_balas_branch_rule2
 
-
-int SCmakebalasbranchrule1v1_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
+int callbacks_make_balas_branch_rule1v1_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, int *rqbeg, int *rqind, int p, int ncols, int q,
 		SCinstance *inst) {
 
-	char *varlu;
+	/*char *varlu;
 	int nzcnt, status = 0;
 	int i, j;
 	double *varbd;
@@ -3136,8 +3120,7 @@ int SCmakebalasbranchrule1v1_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
 
 	free(row);
 	free(rind);
-	free(rval);
+	free(rval);*/
 
-	return (status);
-}
-*/
+	return 0;
+} // END: callbacks_make_balas_branch_rule1v1_sparse

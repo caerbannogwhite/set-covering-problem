@@ -95,4 +95,9 @@ typedef struct SCnodedata
     int *rqind;
 } SCnodedata;
 
+int comm_initialization(SCinstance &inst);
+int comm_read_params(SCinstance &inst, int argc, char *argv[]);
+int comm_read_instance_dns(SCinstance &inst);
+int comm_read_instance_spr(SCinstance &inst);
+
 #endif //SC_COMMON_H
