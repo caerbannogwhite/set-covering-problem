@@ -15,7 +15,9 @@
 STATUS sc_solver(SCinstance &inst)
 {
 	int error;
-	double timeStart, timeEnd;
+	double timeCurr;
+	double timeStart;
+	double timeEnd;
 	std::string thisFuncName = "sc_solver";
 	std::string ext;
 	std::string problemName = "set_covering-";
@@ -31,6 +33,7 @@ STATUS sc_solver(SCinstance &inst)
 	CPXENVptr env = CPXopenCPLEX(&error);
 	CPXLPptr lp = CPXXcreateprob(env, &error, &problemName[0]);
 
+	CPXgettime(env, &inst.timeStart); // Start counting time from this moment
 	CPXgettime(env, &timeStart);
 	if (ext.compare("txt") == 0)	// Read problem in raw text format
 	{
@@ -53,7 +56,7 @@ STATUS sc_solver(SCinstance &inst)
 
 	/////////////////////////	 PRESOLVE	/////////////////////////////////////////////
 
-	/*CPXENVptr pre_env = CPXopenCPLEX(&error);
+	CPXENVptr pre_env = CPXopenCPLEX(&error);
 	CPXLPptr pre_lp = CPXcreateprob(pre_env, &error, "presolver");
 	CPXLPptr red_lp = CPXcreateprob(pre_env, &error, "red-lp");
 	CPXreadcopyprob(pre_env, pre_lp, &inst.inputFilePath, NULL);
@@ -66,7 +69,7 @@ STATUS sc_solver(SCinstance &inst)
 	// collect the reduced model and launch the dominance presolver on it
 	// REMOVE (?): the same result can be obtained by using the cplex presolver and providing
 	// the reduced model as the input for the dominance routine
-	if (strcmp(inst.presolver, "cplex+dominance") == 0) {
+	if (strcmp(inst.presolver, "cpxdom") == 0) {
 		CPXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
 
 		CPXmipopt(pre_env, pre_lp);
@@ -105,12 +108,9 @@ STATUS sc_solver(SCinstance &inst)
 		printf("cols = %d\n", inst.num_selected_cols);
 		free(inst.selected_columns);
     }
-
-	// NO PRESOLVER
-	else
+	else // No presolver
 	{
-		if (inst.verbosityLevel > 0)
-			printf("No presolver selected.\n");
+		comm_log(inst, 0, "No presolver selected.");
 		CPXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
 	}
 	CPXgettime(env, &timeEnd);
@@ -119,7 +119,7 @@ STATUS sc_solver(SCinstance &inst)
 	CPXfreeprob(pre_env, &pre_lp);
 	CPXcloseCPLEX(&pre_env);
 
-	inst.timePresolver = timeEnd - timeStart;*/
+	inst.timePresolver = timeEnd - timeStart;
 
 
 	/////////////////////////	 SET PARAMETERS AND SOLVE	/////////////////////////////
@@ -135,7 +135,8 @@ STATUS sc_solver(SCinstance &inst)
 	CPXgettime(env, &timeStart);
 	if (inst.solver.compare("cplex") == 0)
 	{
-		CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+		CPXgettime(env, &timeCurr);
+		CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit - (timeCurr - inst.timeStart));
 		CPXsetintparam(env, CPX_PARAM_THREADS, inst.numThreads);
 
 		CPXmipopt(env, lp);
@@ -175,9 +176,14 @@ STATUS sc_solver(SCinstance &inst)
 	else
 	{
 		std::cerr << thisFuncName + " - solver unknown: " + inst.solver << std::endl;
+		CPXfreeprob(env, &lp);
+		CPXcloseCPLEX(&env);
+
+		return SC_GENERIC_ERROR;
 	}
 	CPXgettime(env, &timeEnd);
 	inst.timeSolver = timeEnd - timeStart;
+	inst.timeTotal = timeEnd - inst.timeStart;
 
 
 	/////////////////////////	 GET SOLUTION 	/////////////////////////////////////////
@@ -321,25 +327,31 @@ STATUS sc_solver_balas_rule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 STATUS sc_solver_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
-	size_t i;
-	double val;
+	double timeCurr;
+	std::string thisFuncName = "sc_solver_maxcol";
 
-	for (i = 0; i < CPXgetnumcols(env, lp); ++i)
-	{
-		status = CPXgetobj(env, lp, &val, i, i);
-		inst.obj(i) = val;
-	}
+	CPXgettime(env, &timeCurr);
 
 	CPXsetintparam(env, CPX_PARAM_MIPCBREDLP, CPX_OFF); // Disable problem reduction
 	CPXsetintparam(env, CPX_PARAM_REDUCE, 1);
 	CPXsetintparam(env, CPX_PARAM_PRELINEAR, 0);
 	CPXsetdblparam(env, CPXPARAM_MIP_Limits_CutsFactor, 0.0); // Turn off cuts generation
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
+	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit - (timeCurr - inst.timeStart));
 	CPXsetintparam(env, CPX_PARAM_THREADS, inst.numThreads);
 
 	status = CPXsetbranchcallbackfunc(env, callbacks_branch_maxcol, &inst);
+	if (status)
+	{
+		std::cerr << thisFuncName + " - CPXsetbranchcallbackfunc return exit status " << status << std::endl;
+		return SC_ERR_CALLBACK;
+	}
 
-	CPXmipopt(env, lp);
+	status = CPXmipopt(env, lp);
+	if (status)
+	{
+		std::cerr << thisFuncName + " - CPXmipopt return exit status " << status << std::endl;
+		return SC_ERR_CALLBACK;
+	}
 
 	return SC_SUCCESFULL;
 }
@@ -377,13 +389,22 @@ STATUS sc_solver_maxcol_dom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return 1;
 }
 
+/**
+ * Take the cplex lp model and fill the values on
+ * the instance objective and the instance matrix.
+ * 
+ * @param inst - SCinstance current instance
+ * @param env - CPXENVptr cplex environment
+ * @param lp - CPXLPptr cplex linear programming model
+ * @return a status code
+ */
 STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	size_t i;
 	size_t j;
 	double val;
 
-	// Read objective function
+	// Read objective function from lp model
 	inst.obj = arma::vec(CPXgetnumcols(env, lp));
 	for (j = 0; j < CPXgetnumcols(env, lp); ++j)
 	{
@@ -391,7 +412,7 @@ STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		inst.obj(j) = val;
 	}
 
-	// Read matrix
+	// Read matrix from lp model
 	inst.dnsmat = arma::mat(CPXgetnumrows(env, lp), CPXgetnumcols(env, lp));
 	for (i = 0; i < (size_t)CPXgetnumrows(env, lp); ++i)
 	{
@@ -405,6 +426,15 @@ STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return SC_SUCCESFULL;
 }
 
+/**
+ * Take the raw model in instance (inst.obj and inst.dnsmat)
+ * and fill the cplex lp model.
+ * 
+ * @param inst - SCinstance current instance
+ * @param env - CPXENVptr cplex environment
+ * @param lp - CPXLPptr cplex empty linear programming model to build
+ * @return a status code
+ */
 STATUS sc_build_raw2lp(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	char binCol = 'B';

@@ -133,6 +133,15 @@ STATUS comm_read_params(SCinstance &inst, int argc, char *argv[])
     return SC_SUCCESFULL;
 }
 
+STATUS comm_log(SCinstance &inst, int level, std::string msg)
+{
+    if (inst.verbosityLevel > level)
+    {
+        std::cout << msg << std::endl;
+    } 
+    return SC_SUCCESFULL;
+}
+
 /**
  * Read a Set Covering Problem instance at inst.inputFile
  * and represent it as a dense matrix.
