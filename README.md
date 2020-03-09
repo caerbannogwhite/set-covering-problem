@@ -37,11 +37,16 @@ Try the solver:
 $ ./lib/scsolver --inputFile data/scpnre1.txt --solver cplex --timeLimit 10
 ```
 
-### Features Available
 
-| Presolver | none (default)  |
-|-----------|-----------------|
-| Solver    | cplex (default) |
+### Available Features
+
+|               | Available       |
+|---------------|-----------------|
+| **Presolver** | none (default)  |
+|               | cpxdom          |
+|               |                 |
+| **Solver**    | cplex (default) |
+|               | maxcol          |
 
 
 ### Extensions
