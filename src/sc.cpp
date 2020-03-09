@@ -10,9 +10,9 @@
  * routines are colled.
  * 
  * @param inst - SCP instance
- * @return a code
+ * @return a status code
  */
-int sc_solver(SCinstance &inst)
+STATUS sc_solver(SCinstance &inst)
 {
 	int error;
 	double timeStart, timeEnd;
@@ -23,20 +23,21 @@ int sc_solver(SCinstance &inst)
 
 
 	/////////////////////////	READ AND BUILD PROBLEM 		/////////////////////////////
+
 	boost::split(tokens, inst.inputFilePath, boost::is_any_of("/."));
 	ext = tokens[tokens.size() - 1];
 	problemName += tokens[tokens.size() - 2];
 
 	CPXENVptr env = CPXopenCPLEX(&error);
-	CPXLPptr lp = CPXXcreateprob(env, &error, problemName[0]);
+	CPXLPptr lp = CPXXcreateprob(env, &error, &problemName[0]);
 
 	CPXgettime(env, &timeStart);
-	if (ext.compare("txt"))	// Read problem in raw text format
+	if (ext.compare("txt") == 0)	// Read problem in raw text format
 	{
 		comm_read_instance_dns(inst);
 		sc_build_raw2lp(inst, env, lp);
 	} else
-	if (ext.compare("lp")) // Import model in lp format
+	if (ext.compare("lp") == 0) // Import model in lp format
 	{
 		CPXXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
 		sc_build_lp2raw(inst, env, lp);
@@ -51,6 +52,7 @@ int sc_solver(SCinstance &inst)
 
 
 	/////////////////////////	 PRESOLVE	/////////////////////////////////////////////
+
 	/*CPXENVptr pre_env = CPXopenCPLEX(&error);
 	CPXLPptr pre_lp = CPXcreateprob(pre_env, &error, "presolver");
 	CPXLPptr red_lp = CPXcreateprob(pre_env, &error, "red-lp");
@@ -60,58 +62,11 @@ int sc_solver(SCinstance &inst)
 
 	CPXgettime(env, &timeStart);
 
-	// CPLEX PRESOLVER: set the maximum number of nodes to 1 and launch the solver
-	// Then collect the reduced model and save it in lp file
-	if (inst.presolver.compare("cplex") == 0)
-	{
-		CPXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
-		CPXmipopt(pre_env, pre_lp);
-
-		//CPXgetredlp(pre_env, pre_lp, &red_lp);
-
-		//char cpx_problemName[100];
-		//strcpy(cpx_problemName, inst.inputFilePath);
-		//strcat(cpx_problemName, "_cpx.lp");
-
-		//error = CPXwriteprob(pre_env, red_lp, cpx_problemName, NULL);
-		//if (error) { printf("CPXwriteprob error: %d\n", error); }
-		//printf("cols = %d\n", CPXgetnumcols(pre_env, red_lp));
-	}
-
-	// DOMINANCE PRESOLVER: scen all the columns to find dominated ones
-	else if (inst.presolver.compare("dominance") == 0)
-	{
-
-		CPXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
-
-		SCdominancepresolver(inst, env, lp);
-
-		double ub = 0.0;
-		for (int j = CPXgetnumcols(env, lp); j >= 0; j--)
-		{
-			CPXgetub(env, lp, &ub, j, j);
-			if (ub < 0.5)
-			{
-				CPXdelcols(env, lp, j, j);
-			}
-		}
-
-		string dom_problemName;
-		dom_problemName = inst.inputFilePath + "_dom.lp";
-
-		error = CPXwriteprob(env, lp, &dom_problemName[0], NULL);
-		if (error)
-		{
-			printf("CPXwriteprob error: %d\n", error);
-		}
-		printf("cols = %d\n", CPXgetnumcols(env, lp));
-	}
-
 	// CPLEX+DOMINANCE PRESOLVER: launch cplex and stop the computation at the root node
 	// collect the reduced model and launch the dominance presolver on it
 	// REMOVE (?): the same result can be obtained by using the cplex presolver and providing
 	// the reduced model as the input for the dominance routine
-	else if (strcmp(inst.presolver, "cplex+dominance") == 0) {
+	if (strcmp(inst.presolver, "cplex+dominance") == 0) {
 		CPXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
 
 		CPXmipopt(pre_env, pre_lp);
@@ -226,6 +181,7 @@ int sc_solver(SCinstance &inst)
 
 
 	/////////////////////////	 GET SOLUTION 	/////////////////////////////////////////
+
 	//ncols = CPXgetnumcols(env, lp);
 	//inst.x_star = (double *) calloc(ncols, sizeof(double));
 	//CPXgetx(env, lp, inst.x_star, 0, ncols - 1);
@@ -234,13 +190,14 @@ int sc_solver(SCinstance &inst)
 
 
 	/////////////////////////	CLOSE CPLEX 	/////////////////////////////////////////
+
 	std::printf("\n");
 	std::printf("Build time       = %10.4lf\n", inst.timeBuild);
 	std::printf("Presolver time   = %10.4lf\n", inst.timePresolver);
-	//std::printf("Solver time      = %10.4lf\n", inst.timeSolver);
+	std::printf("Solver time      = %10.4lf\n", inst.timeSolver);
 	std::printf("Total time       = %10.4lf\n", inst.timeTotal);
 	std::printf("Best obj val     = %10.4lf\n", inst.bestObjVal);
-	//std::printf("Obj val          = %10.4lf\n", inst.objVal);
+	std::printf("Obj val          = %10.4lf\n", inst.objVal);
 	std::printf("Node total       = %10d\n", CPXgetnodecnt(env, lp));
 	std::printf("Node left        = %10d\n\n", CPXgetnodeleftcnt(env, lp));
 
@@ -250,7 +207,7 @@ int sc_solver(SCinstance &inst)
 	return SC_SUCCESFULL;
 }
 
-int sc_solver_balas_cuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_balas_cuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
 {
     int status;
 
@@ -273,7 +230,7 @@ int sc_solver_balas_cuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
     return 1;
 }
 
-int sc_solver_balas_cuts(SCinstance &inst, IloEnv env, IloCplex cplex)
+STATUS sc_solver_balas_cuts(SCinstance &inst, IloEnv env, IloCplex cplex)
 {
 	int status;
 
@@ -294,7 +251,7 @@ int sc_solver_balas_cuts(SCinstance &inst, IloEnv env, IloCplex cplex)
 	return SC_SUCCESFULL;
 }
 
-int sc_solver_balas_rule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_balas_rule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
@@ -308,7 +265,7 @@ int sc_solver_balas_rule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return 1;
 }
 
-int sc_solver_balas_rule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_balas_rule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
@@ -322,7 +279,7 @@ int sc_solver_balas_rule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return 1;
 }
 
-int sc_solver_balas_rule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_balas_rule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
@@ -336,7 +293,7 @@ int sc_solver_balas_rule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return 1;
 }
 
-int sc_solver_balas_rule1_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_balas_rule1_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
@@ -350,7 +307,7 @@ int sc_solver_balas_rule1_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPpt
 	return 1;
 }
 
-int sc_solver_balas_rule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_balas_rule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
@@ -361,7 +318,7 @@ int sc_solver_balas_rule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return 1;
 }
 
-int sc_solver_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 	size_t i;
@@ -387,7 +344,7 @@ int sc_solver_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return SC_SUCCESFULL;
 }
 
-int sc_solver_maxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_maxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	/*int status;
 
@@ -398,7 +355,7 @@ int sc_solver_maxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return SC_SUCCESFULL;
 }
 
-int sc_solver_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
@@ -409,7 +366,7 @@ int sc_solver_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return 1;
 }
 
-int sc_solver_maxcol_dom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS sc_solver_maxcol_dom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 
@@ -441,7 +398,7 @@ STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 		for (j = 0; j < (size_t)CPXgetnumcols(env, lp); ++j)
 		{
 			CPXgetcoef(env, lp, i, j, &val);
-			inst.dnsmat = val;
+			inst.dnsmat(i, j) = val;
 		}
 	}
 
@@ -452,6 +409,7 @@ STATUS sc_build_raw2lp(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	char binCol = 'B';
 	char geSense = 'G';
+	int status;
 	size_t i;
 	size_t j;
 	double rhs = 1.0;
@@ -461,17 +419,17 @@ STATUS sc_build_raw2lp(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	for (j = 0; j < inst.obj.n_elem; ++j)
 	{
 		val = inst.obj(j);
-		int CPXnewcols(env, lp, 1, &val, NULL, NULL, &binCol, NULL);
+		status = CPXnewcols(env, lp, 1, &val, NULL, NULL, &binCol, NULL);
 	}
 
 	// Set matrix on lp model
 	for (i = 0; i < inst.dnsmat.n_rows; ++i)
 	{
-		CPXnewrows(env,lp, 1, &rhs, &geSense, NULL, NULL);
+		CPXnewrows(env, lp, 1, &rhs, &geSense, NULL, NULL);
 		for (j = 0; j < inst.dnsmat.n_cols; ++j)
 		{
-			val = inst.obj(j);
-			CPXchgcoef(env, lp, i, j, val);
+			val = inst.dnsmat(i, j);
+			status = CPXchgcoef(env, lp, i, j, val);
 		}
 	}
 

@@ -1,12 +1,13 @@
 
 #include "common.hpp"
 
-/** Initialize all configuration variables in SCinstance.
+/**
+ * Initialize all configuration variables in SCinstance.
  * 
  * @param inst - SCinstance
- * @return a code
+ * @return a status code
  */
-int comm_initialization(SCinstance &inst)
+STATUS comm_initialization(SCinstance &inst)
 {
     inst.mipNodesel = CPX_NODESEL_BESTBOUND;
     inst.mipVarsel = CPX_VARSEL_DEFAULT;
@@ -19,17 +20,20 @@ int comm_initialization(SCinstance &inst)
     inst.timeSolver = 0;
     inst.timeTotal = 0;
 
+    inst.debug = false;
+
     return SC_SUCCESFULL;
 }
 
-/** Scan arguments and set configuration paramentes.
+/**
+ * Scan arguments and set configuration paramentes.
  * 
  * @param inst - SCinstance
  * @param argc - the length of the argv array
  * @param argv - the input arguments array
- * @return a code
+ * @return a status code
  */
-int comm_read_params(SCinstance &inst, int argc, char *argv[])
+STATUS comm_read_params(SCinstance &inst, int argc, char *argv[])
 {
     try
     {
@@ -59,68 +63,70 @@ int comm_read_params(SCinstance &inst, int argc, char *argv[])
             exit(0);
         }
 
+        std::printf("####################          PARAMETERS          ####################\n\n");
         if (vm.count("presolver"))
         {
-            cout << "Presolver set to " << vm["presolver"].as<string>() << ".\n";
+            std::printf("%40s %s\n", "Presolver set to ", &vm["presolver"].as<string>()[0]);
         }
         if (vm.count("solver"))
         {
-            cout << "Solver set to " << vm["solver"].as<string>() << ".\n";
+            std::printf("%40s %s\n", "Solver set to ", &vm["solver"].as<string>()[0]);
         }
         if (vm.count("inputFile"))
         {
-            cout << "Input file path set to " << vm["inputFile"].as<string>() << ".\n";
+            std::printf("%40s %s\n", "Input file path set to ", &vm["inputFile"].as<string>()[0]);
         }
         else
         {
-            cout << "Input file path not set. Exiting.\n";
+            std::cerr << "Input file path not set. Exiting.\n";
             return SC_GENERIC_ERROR;
         }
         if (vm.count("verbosity"))
         {
-            cout << "Verbosity level set to " << vm["verbosity"].as<int>() << ".\n";
+            std::printf("%40s %i\n", "Verbosity level set to ", vm["verbosity"].as<int>());
         }
         if (vm.count("numThread"))
         {
-            cout << "Number of threads set to " << vm["numThread"].as<int>() << ".\n";
+            std::printf("%40s %i\n", "Number of threads set to ", vm["numThread"].as<int>());
         }
         if (vm.count("timeLimit"))
         {
-            cout << "MIP time limit set to " << vm["timeLimit"].as<double>() << ".\n";
+            std::printf("%40s %.4E\n", "MIP time limit set to ", vm["timeLimit"].as<double>());
         }
         if (vm.count("branchNum"))
         {
-            cout << "Branch number set to " << vm["branchNum"].as<int>() << ".\n";
+            std::printf("%40s %i\n", "Branch number set to ", vm["branchNum"].as<int>());
         }
         if (vm.count("maxBranch"))
         {
-            cout << "Maximum number of branches set to " << vm["maxBranch"].as<int>() << ".\n";
+            std::printf("%40s %i\n", "Maximum number of branches set to ", vm["maxBranch"].as<int>());
         }
         if (vm.count("maxSingl"))
         {
-            cout << "Maximum number of singletons set to " << vm["maxSingl"].as<int>() << ".\n";
+            std::printf("%40s %i\n", "Maximum number of singletons set to ", vm["maxSingl"].as<int>());
         }
         if (vm.count("cutsFactor"))
         {
-            cout << "MIP cuts factor set to " << vm["cutsFactor"].as<double>() << ".\n";
+            std::printf("%40s %lf\n", "MIP cuts factor set to ", vm["cutsFactor"].as<double>());
         }
         if (vm.count("seed"))
         {
-            cout << "Random seed set to " << vm["seed"].as<int>() << ".\n";
+            std::printf("%40s %i\n", "Random seed set to ", vm["seed"].as<int>());
         }
         if (vm.count("debug"))
         {
-            cout << "Debug value set to " << vm["debug"].as<bool>() << ".\n";
+            std::printf("%40s %i\n", "Debug value set to ", vm["debug"].as<bool>());
         }
+        std::printf("\n");
     }
     catch (exception &e)
     {
-        cerr << "error: " << e.what() << "\n";
+        std::cerr << "error: " << e.what() << "\n";
         return SC_GENERIC_ERROR;
     }
     catch (...)
     {
-        cerr << "Exception of unknown type!\n";
+        std::cerr << "Exception of unknown type!\n";
         return SC_GENERIC_ERROR;
     }
 
@@ -132,9 +138,9 @@ int comm_read_params(SCinstance &inst, int argc, char *argv[])
  * and represent it as a dense matrix.
  *
  * @param inst - SCinstance
- * @returns a code
+ * @returns a status code
  */
-int comm_read_instance_dns(SCinstance &inst)
+STATUS comm_read_instance_dns(SCinstance &inst)
 {
     int m, n, i, j, nz, col;
     std::ifstream fileHandler;
@@ -164,13 +170,6 @@ int comm_read_instance_dns(SCinstance &inst)
     }
     fileHandler.close();
 
-    // DEBUG: print this instance
-    std::cout << "obj =\n";
-    std::cout << inst.obj << std::endl;
-
-    std::cout << "mat =\n";
-    std::cout << inst.dnsmat << std::endl;
-
     return SC_SUCCESFULL;
 }
 
@@ -179,9 +178,9 @@ int comm_read_instance_dns(SCinstance &inst)
  * and represent it as a sparse matrix.
  *
  * @param &inst - SCinstance
- * @returns code
+ * @returns a status code
  */
-int comm_read_instance_spr(SCinstance &inst)
+STATUS comm_read_instance_spr(SCinstance &inst)
 {
 
     return SC_SUCCESFULL;
