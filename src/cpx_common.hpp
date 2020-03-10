@@ -11,7 +11,6 @@
 #include <unordered_set>
 
 #include <armadillo>
-#include <ilcplex/ilocplex.h>
 #include <ilcplex/cplex.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>

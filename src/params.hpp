@@ -5,7 +5,7 @@
 #define SC_EPSILON_SMALL 1e-12
 #define BIG_M 1e20
 
-typedef enum STATUS
+enum STATUS
 {
     SC_SUCCESFULL,
     SC_GENERIC_ERROR,

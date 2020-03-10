@@ -30,7 +30,7 @@ STATUS cpxsol(SCinstance &inst)
 	problemName += tokens[tokens.size() - 2];
 
 	CPXENVptr env = CPXopenCPLEX(&error);
-	CPXLPptr lp = CPXXcreateprob(env, &error, &problemName[0]);
+	CPXLPptr lp = CPXcreateprob(env, &error, &problemName[0]);
 
 	CPXgettime(env, &inst.timeStart); // Start counting time from this moment
 	CPXgettime(env, &timeStart);
@@ -41,7 +41,7 @@ STATUS cpxsol(SCinstance &inst)
 	} else
 	if (ext.compare("lp") == 0) // Import model in lp format
 	{
-		CPXXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
+		CPXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
 		cpxsol_build_lp2raw(inst, env, lp);
 	} else
 	{
@@ -306,7 +306,7 @@ STATUS cpxsol_preproc_dominance(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return SC_SUCCESFULL;
 }
 
-STATUS cpxsol_balas_cuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_balas_cuts_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
     /*inst.balasnodecnt = 0;
     inst.cplexnodecnt = 0;
@@ -317,10 +317,10 @@ STATUS cpxsol_balas_cuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
 
     CPXmipopt(env, lp);*/
 
-    return 1;
+    return SC_SUCCESFULL;
 }
 
-STATUS cpxsol_balas_cuts(SCinstance &inst, IloEnv env, IloCplex cplex)
+STATUS cpxsol_balas_cuts(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	/*// usato per contare i tagli in questo caso
 	inst.balasnodecnt = 0;

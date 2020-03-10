@@ -448,7 +448,6 @@ int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double 
 
 int baldns_over_sat_rows(arma::mat &mat, arma::vec &x)
 {
-	size_t i;
 	double cnt;
 
 	std::unique_ptr<arma::uvec> indecesPtr(new arma::uvec());
