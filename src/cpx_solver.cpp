@@ -37,8 +37,6 @@ STATUS cpxsol(SCinstance &inst)
 	if (ext.compare("txt") == 0)	// Read problem in raw text format
 	{
 		cpxcomm_read_instance_dns(inst);
-		//cpxcomm_read_instance_spr(inst);
-		//return SC_SUCCESFULL;
 		cpxsol_build_raw2lp(inst, env, lp);
 	} else
 	if (ext.compare("lp") == 0) // Import model in lp format

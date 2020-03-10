@@ -30,7 +30,6 @@ typedef struct SCinstance
 
     arma::vec dnsobj;
     arma::mat dnsmat;
-    arma::vec sprobj;
     arma::sp_mat sprmat;
 
     // CPLEX parameters

@@ -191,24 +191,19 @@ STATUS balcomm_read_instance_dns(BALSOLEnv &inst)
  * Read a Set Covering Problem instance at inst.inputFile
  * and represent it as a sparse matrix.
  *
- * @param &inst - BALSOLEnv
+ * @param &inst - SCinstance
  * @returns a status code
  */
-STATUS balcomm_read_instance_spr(BALSOLEnv &inst)
+STATUS cpxcomm_read_instance_spr(BALSOLEnv &inst)
 {
     int m;
     int n;
     int i;
     int j;
+    int cntNonZero;
     int nz;
     int col;
     double val;
-
-    std::unique_ptr<arma::umat> locationsPtr(new arma::umat());
-    std::unique_ptr<arma::vec> valuesPtr(new arma::vec());
-
-    arma::umat locs;
-    arma::vec vals;
 
     std::ifstream fileHandler;
     fileHandler.open(inst.inputFilePath);
@@ -216,58 +211,56 @@ STATUS balcomm_read_instance_spr(BALSOLEnv &inst)
     // Read number of rows and columns
     fileHandler >> m >> n;
 
+    inst.dnsobj = arma::vec(n);
+
     // Read objective values
-    for (j = 0; j < n; ++j)
+    for (auto it = inst.dnsobj.begin(); it != inst.dnsobj.end(); ++it)
+    {
+        fileHandler >> *it;
+    }
+
+    // Count the number of non-zero elements
+    cntNonZero = 0;
+    for (i = 0; i < m; ++i)
+    {
+        fileHandler >> nz;
+        cntNonZero += nz;
+        for (j = 0; j < nz; ++j)
+        {
+            fileHandler >> col;
+        }
+    }
+    fileHandler.close();
+
+    // Reopen file to read the matrix
+    fileHandler.open(inst.inputFilePath);
+
+    // Read number of rows and columns and skip all objective values
+    fileHandler >> m >> n;
+    for (auto it = inst.dnsobj.cbegin(); it != inst.dnsobj.cend(); ++it)
     {
         fileHandler >> val;
-        (*locationsPtr) << 0 << j << arma::endr;
-        (*valuesPtr) << val;
-        std::cout << val << " ";
     }
-    std::cout << std::endl;
 
-    std::cout << "loc = \n";
-    std::cout << (*locationsPtr);
-    std::cout << "val = \n";
-    std::cout << (*valuesPtr);
-
-    locs << 1 << 2 << arma::endr
-         << 2 << 4 << arma::endr
-         << 3 << 1 << arma::endr;
-
-    vals << 1.2 << 2.3 << 1.3 << arma::endr;
-
-    std::cout << "loc = \n";
-    std::cout << locs;
-    std::cout << "val = \n";
-    std::cout << vals;
-
-    inst.sprobj = arma::sp_mat(locs, vals, 1, n, true, false);
-    std::cout << "obj = \n";
-    std::cout << inst.sprobj;
-    locationsPtr->clear();
-    valuesPtr->clear();
-
-    // Read matrix
-    /*for (i = 0; i < m; ++i)
+    // Read the matrix
+    std::unique_ptr<arma::umat> locationsPtr(new arma::umat(2, cntNonZero));
+    std::unique_ptr<arma::vec> valuesPtr(new arma::vec(cntNonZero));
+    cntNonZero = 0;
+    for (i = 0; i < m; ++i)
     {
         fileHandler >> nz;
         for (j = 0; j < nz; ++j)
         {
             fileHandler >> col;
-            (*locationsPtr) << i << (col - 1) << arma::endr;
-            (*valuesPtr) << 1.0;
+            (*locationsPtr)(0, cntNonZero) = i;
+            (*locationsPtr)(1, cntNonZero) = col - 1;
+            (*valuesPtr)(cntNonZero) = 1.0;
+            ++cntNonZero;
         }
-    }*/
-
-    //inst.sprmat = arma::sp_mat(*locationsPtr, *valuesPtr, m, n, true, false);
-
+    }
     fileHandler.close();
 
-    //std::cout << "obj = \n";
-    //std::cout << inst.sprobj;
-    //std::cout << "mat = \n";
-    //std::cout << inst.sprmat;
+    inst.sprmat = arma::sp_mat(*locationsPtr, *valuesPtr, m, n, true, false);
 
     return SC_SUCCESFULL;
 }

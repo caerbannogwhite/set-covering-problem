@@ -8,7 +8,7 @@ The implemented approaches have been tested on the `scpnre1-scpnrf5` instances a
 The results obtained are described in this [report](https://github.com/caerbannogwhite/set-covering-problem/tree/master/report/report.pdf).
 
 The software requires the following software:
-- [CPLEX](https://www.ibm.com/analytics/cplex-optimizer)
+- [CPLEX](https://www.ibm.com/analytics/cplex-optimizer), if you want to build the `cpxsol`
 - [Boost](https://www.boost.org/)
 - [Armadillo](http://arma.sourceforge.net/)
 - [OpenBLAS](http://www.openblas.net/) (required by Armadillo)
@@ -29,12 +29,13 @@ Once you have installed them in your computer, you should change the `CPLEX_HOME
 To build the solver, type:
 ```sh
 $ mkdir lib
-$ make
+$ make cpxsol   # to build the solver with cplex, or
+$ make balsol   # to build the Balas solver
 ```
 
 Try the solver:
 ```sh
-$ ./lib/scsolver --inputFile data/scpnre1.txt --solver cplex --timeLimit 10
+$ ./lib/cpxsol --inputFile data/scpnre1.txt --solver cplex --timeLimit 10
 ```
 
 
