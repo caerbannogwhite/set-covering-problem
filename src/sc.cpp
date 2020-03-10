@@ -37,7 +37,10 @@ STATUS sc_solver(SCinstance &inst)
 	CPXgettime(env, &timeStart);
 	if (ext.compare("txt") == 0)	// Read problem in raw text format
 	{
-		comm_read_instance_dns(inst);
+		//comm_read_instance_dns(inst);
+		std::cout << "Reading instance\n";
+		comm_read_instance_spr(inst);
+		return SC_SUCCESFULL;
 		sc_build_raw2lp(inst, env, lp);
 	} else
 	if (ext.compare("lp") == 0) // Import model in lp format
@@ -56,28 +59,27 @@ STATUS sc_solver(SCinstance &inst)
 
 	/////////////////////////	 PRESOLVE	/////////////////////////////////////////////
 
-	CPXENVptr pre_env = CPXopenCPLEX(&error);
-	CPXLPptr pre_lp = CPXcreateprob(pre_env, &error, "presolver");
-	CPXLPptr red_lp = CPXcreateprob(pre_env, &error, "red-lp");
-	CPXreadcopyprob(pre_env, pre_lp, &inst.inputFilePath, NULL);
+	CPXENVptr envPresol = CPXopenCPLEX(&error);
+	CPXLPptr lpPresol = CPXcreateprob(envPresol, &error, "presol");
+	CPXLPptr lpReduced = CPXcreateprob(envPresol, &error, "reduced");
+	CPXreadcopyprob(envPresol, lpPresol, &inst.inputFilePath[0], NULL);
 
-	CPXsetintparam(pre_env, CPX_PARAM_THREADS, inst.numThreads);
-
-	CPXgettime(env, &timeStart);
+	CPXsetintparam(envPresol, CPX_PARAM_THREADS, inst.numThreads);
 
 	// CPLEX+DOMINANCE PRESOLVER: launch cplex and stop the computation at the root node
 	// collect the reduced model and launch the dominance presolver on it
 	// REMOVE (?): the same result can be obtained by using the cplex presolver and providing
 	// the reduced model as the input for the dominance routine
-	if (strcmp(inst.presolver, "cpxdom") == 0) {
-		CPXsetintparam(pre_env, CPX_PARAM_NODELIM, 1);
+	CPXgettime(env, &timeStart);
+	/*if (strcmp(inst.presolver, "cpxdom") == 0) {
+		CPXsetintparam(envPresol, CPX_PARAM_NODELIM, 1);
 
-		CPXmipopt(pre_env, pre_lp);
-		CPXgetredlp(pre_env, pre_lp, &red_lp);
+		CPXmipopt(envPresol, lpPresol);
+		CPXgetredlp(envPresol, lpPresol, &lpReduced);
 
-		printf("cols = %d\n", CPXgetnumcols(pre_env, red_lp));
+		printf("cols = %d\n", CPXgetnumcols(envPresol, lpReduced));
 
-		error = CPXwriteprob(pre_env, red_lp, "reduced_model.lp", NULL);
+		error = CPXwriteprob(envPresol, lpReduced, "reduced_model.lp", NULL);
 		if (error) { printf("CPXwriteprob error: %d\n", error); }
 		error = CPXreadcopyprob(env, lp, "reduced_model.lp", NULL);
 		if (error) { printf("CPXreadcopyprob error: %d\n", error); }
@@ -112,12 +114,12 @@ STATUS sc_solver(SCinstance &inst)
 	{
 		comm_log(inst, 0, "No presolver selected.");
 		CPXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
-	}
+	}*/
 	CPXgettime(env, &timeEnd);
 
-	CPXfreeprob(pre_env, &red_lp);
-	CPXfreeprob(pre_env, &pre_lp);
-	CPXcloseCPLEX(&pre_env);
+	CPXfreeprob(envPresol, &lpReduced);
+	CPXfreeprob(envPresol, &lpPresol);
+	CPXcloseCPLEX(&envPresol);
 
 	inst.timePresolver = timeEnd - timeStart;
 
@@ -405,11 +407,11 @@ STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	double val;
 
 	// Read objective function from lp model
-	inst.obj = arma::vec(CPXgetnumcols(env, lp));
+	inst.dnsobj = arma::vec(CPXgetnumcols(env, lp));
 	for (j = 0; j < CPXgetnumcols(env, lp); ++j)
 	{
 		CPXgetobj(env, lp, &val, j, j);
-		inst.obj(j) = val;
+		inst.dnsobj(j) = val;
 	}
 
 	// Read matrix from lp model
@@ -427,7 +429,7 @@ STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 }
 
 /**
- * Take the raw model in instance (inst.obj and inst.dnsmat)
+ * Take the raw model in instance (inst.dnsobj and inst.dnsmat)
  * and fill the cplex lp model.
  * 
  * @param inst - SCinstance current instance
@@ -446,9 +448,9 @@ STATUS sc_build_raw2lp(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	double val;
 
 	// Set objective function on lp model
-	for (j = 0; j < inst.obj.n_elem; ++j)
+	for (j = 0; j < inst.dnsobj.n_elem; ++j)
 	{
-		val = inst.obj(j);
+		val = inst.dnsobj(j);
 		status = CPXnewcols(env, lp, 1, &val, NULL, NULL, &binCol, NULL);
 	}
 

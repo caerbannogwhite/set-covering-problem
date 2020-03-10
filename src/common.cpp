@@ -133,6 +133,15 @@ STATUS comm_read_params(SCinstance &inst, int argc, char *argv[])
     return SC_SUCCESFULL;
 }
 
+/**
+ * Print a log message based on the level of verbosity
+ * set by the user.
+ * 
+ * @param inst - SCP instance
+ * @param level - the verbosity level of the message (0 to 10)
+ * @param msg - the message to print
+ * @return a status code
+ */
 STATUS comm_log(SCinstance &inst, int level, std::string msg)
 {
     if (inst.verbosityLevel > level)
@@ -151,23 +160,28 @@ STATUS comm_log(SCinstance &inst, int level, std::string msg)
  */
 STATUS comm_read_instance_dns(SCinstance &inst)
 {
-    int m, n, i, j, nz, col;
+    int m;
+    int n;
+    int i;
+    int j;
+    int nz;
+    int col;
     std::ifstream fileHandler;
     fileHandler.open(inst.inputFilePath);
 
-    // read number of rows and columns
+    // Read number of rows and columns
     fileHandler >> m >> n;
 
-    inst.obj = arma::vec(n);
+    inst.dnsobj = arma::vec(n);
     inst.dnsmat = arma::mat(m, n);
 
-    // read objective values
-    for (auto it = inst.obj.begin(); it != inst.obj.end(); ++it)
+    // Read objective values
+    for (auto it = inst.dnsobj.begin(); it != inst.dnsobj.end(); ++it)
     {
         fileHandler >> *it;
     }
 
-    // read matrix ones
+    // Read matrix ones
     for (i = 0; i < m; ++i)
     {
         fileHandler >> nz;
@@ -191,6 +205,78 @@ STATUS comm_read_instance_dns(SCinstance &inst)
  */
 STATUS comm_read_instance_spr(SCinstance &inst)
 {
+    int m;
+    int n;
+    int i;
+    int j;
+    int nz;
+    int col;
+    double val;
+
+    std::unique_ptr<arma::umat> locationsPtr(new arma::umat());
+    std::unique_ptr<arma::vec> valuesPtr(new arma::vec());
+
+    arma::umat locs;
+    arma::vec vals;
+
+    std::ifstream fileHandler;
+    fileHandler.open(inst.inputFilePath);
+
+    // Read number of rows and columns
+    fileHandler >> m >> n;
+
+    // Read objective values
+    for (j = 0; j < n; ++j)
+    {
+        fileHandler >> val;
+        (*locationsPtr) << 0 << j << arma::endr;
+        (*valuesPtr) << val;
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "loc = \n";
+    std::cout << (*locationsPtr);
+    std::cout << "val = \n";
+    std::cout << (*valuesPtr);
+
+    locs << 1 << 2 << arma::endr
+         << 2 << 4 << arma::endr
+         << 3 << 1 << arma::endr;
+
+    vals << 1.2 << 2.3 << 1.3 << arma::endr;
+
+    std::cout << "loc = \n";
+    std::cout << locs;
+    std::cout << "val = \n";
+    std::cout << vals;
+
+    inst.sprobj = arma::sp_mat(locs, vals, 1, n, true, false);
+    std::cout << "obj = \n";
+    std::cout << inst.sprobj;
+    locationsPtr->clear();
+    valuesPtr->clear();
+
+    // Read matrix
+    /*for (i = 0; i < m; ++i)
+    {
+        fileHandler >> nz;
+        for (j = 0; j < nz; ++j)
+        {
+            fileHandler >> col;
+            (*locationsPtr) << i << (col - 1) << arma::endr;
+            (*valuesPtr) << 1.0;
+        }
+    }*/
+
+    //inst.sprmat = arma::sp_mat(*locationsPtr, *valuesPtr, m, n, true, false);
+    
+    fileHandler.close();
+
+    //std::cout << "obj = \n";
+    //std::cout << inst.sprobj;
+    //std::cout << "mat = \n";
+    //std::cout << inst.sprmat;
 
     return SC_SUCCESFULL;
 }

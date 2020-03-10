@@ -32,6 +32,7 @@ typedef enum STATUS
     SC_SUCCESFULL,
     SC_GENERIC_ERROR,
     SC_SOLVER_NOT_FOUND,
+    SC_ERR_CALLBACK,
     SC_ERR_NOT_COVER,
     SC_ERR_NOT_PRIME_COVER,
     SC_ERR_NOT_DUAL_SOL,
@@ -51,8 +52,10 @@ typedef struct SCinstance
     string solver;
     string inputFilePath;
 
-    arma::vec obj;
+    arma::vec dnsobj;
     arma::mat dnsmat;
+    arma::vec sprobj;
+    arma::sp_mat sprmat;
 
     // CPLEX parameters
     int randomSeed;
@@ -76,6 +79,7 @@ typedef struct SCinstance
     int scBalasMaxSingl;
     int scBalasNodeNumCuts;
 
+    double timeStart;
     double timePresolver;
     double timeBuild;
     double timeSolver;
@@ -97,6 +101,7 @@ typedef struct SCnodedata
 
 STATUS comm_initialization(SCinstance &inst);
 STATUS comm_read_params(SCinstance &inst, int argc, char *argv[]);
+STATUS comm_log(SCinstance &inst, int level, std::string msg);
 STATUS comm_read_instance_dns(SCinstance &inst);
 STATUS comm_read_instance_spr(SCinstance &inst);
 
