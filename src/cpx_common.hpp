@@ -1,7 +1,5 @@
-
-#ifndef SC_COMMON_H
-#define SC_COMMON_H
-
+#ifndef CPX_COMMON_H
+#define CPX_COMMON_H
 
 #include <algorithm>
 #include <fstream>
@@ -18,39 +16,17 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
-using namespace std;
+#include "params.hpp"
+
 namespace po = boost::program_options;
-
-#define DEBUG_VERBOSITY 0
-
-#define SC_EPSILON_MED 1e-5
-#define SC_EPSILON_SMALL 1e-12
-#define BIG_M 1e20
-
-typedef enum STATUS
-{
-    SC_SUCCESFULL,
-    SC_GENERIC_ERROR,
-    SC_SOLVER_NOT_FOUND,
-    SC_ERR_CALLBACK,
-    SC_ERR_NOT_COVER,
-    SC_ERR_NOT_PRIME_COVER,
-    SC_ERR_NOT_DUAL_SOL,
-    SC_ERR_PRIMAL,
-    SC_ERR_DUAL,
-    SC_ERR_DUAL_3,
-    SC_ERR_CPXDUAL_0,
-    SC_ERR_BALAS_COND_VIOLATED,
-    SC_ERR_BALAS_BRANCH_RULE_1,
-};
 
 // data structures
 typedef struct SCinstance
 {
     // input data
-    string presolver;
-    string solver;
-    string inputFilePath;
+    std::string presolver;
+    std::string solver;
+    std::string inputFilePath;
 
     arma::vec dnsobj;
     arma::mat dnsmat;
@@ -99,10 +75,10 @@ typedef struct SCnodedata
     int *rqind;
 } SCnodedata;
 
-STATUS comm_initialization(SCinstance &inst);
-STATUS comm_read_params(SCinstance &inst, int argc, char *argv[]);
-STATUS comm_log(SCinstance &inst, int level, std::string msg);
-STATUS comm_read_instance_dns(SCinstance &inst);
-STATUS comm_read_instance_spr(SCinstance &inst);
+STATUS cpxcomm_initialization(SCinstance &inst);
+STATUS cpxcomm_read_params(SCinstance &inst, int argc, char *argv[]);
+STATUS cpxcomm_log(SCinstance &inst, int level, std::string msg);
+STATUS cpxcomm_read_instance_dns(SCinstance &inst);
+STATUS cpxcomm_read_instance_spr(SCinstance &inst);
 
-#endif //SC_COMMON_H
+#endif // CPX_COMMON_H

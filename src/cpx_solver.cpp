@@ -1,9 +1,8 @@
 
-#include "sc.hpp"
-#include "callbacks.hpp"
+#include "cpx_solver.hpp"
+#include "cpx_callbacks.hpp"
 #include "balas_dense.hpp"
 #include "balas_sparse.hpp"
-#include "preprocessing.hpp"
 
 /**
  * In this function preprocessing and optimisation
@@ -12,13 +11,13 @@
  * @param inst - SCP instance
  * @return a status code
  */
-STATUS sc_solver(SCinstance &inst)
+STATUS cpxsol(SCinstance &inst)
 {
 	int error;
 	double timeCurr;
 	double timeStart;
 	double timeEnd;
-	std::string thisFuncName = "sc_solver";
+	std::string thisFuncName = "cpxsol";
 	std::string ext;
 	std::string problemName = "set_covering-";
 	std::vector<std::string> tokens;
@@ -37,16 +36,15 @@ STATUS sc_solver(SCinstance &inst)
 	CPXgettime(env, &timeStart);
 	if (ext.compare("txt") == 0)	// Read problem in raw text format
 	{
-		//comm_read_instance_dns(inst);
-		std::cout << "Reading instance\n";
-		comm_read_instance_spr(inst);
-		return SC_SUCCESFULL;
-		sc_build_raw2lp(inst, env, lp);
+		cpxcomm_read_instance_dns(inst);
+		//cpxcomm_read_instance_spr(inst);
+		//return SC_SUCCESFULL;
+		cpxsol_build_raw2lp(inst, env, lp);
 	} else
 	if (ext.compare("lp") == 0) // Import model in lp format
 	{
 		CPXXreadcopyprob(env, lp, &inst.inputFilePath[0], NULL);
-		sc_build_lp2raw(inst, env, lp);
+		cpxsol_build_lp2raw(inst, env, lp);
 	} else
 	{
 		std::cerr << thisFuncName + " - unknown file extention found: " + ext << std::endl;
@@ -145,35 +143,35 @@ STATUS sc_solver(SCinstance &inst)
 	}
 	else if (inst.solver.compare("balasbcrule1") == 0)
 	{
-		sc_solver_balas_rule1(inst, env, lp);
+		cpxsol_balas_rule1(inst, env, lp);
 	}
 	else if (inst.solver.compare("balasbcrule1-test") == 0)
 	{
-		sc_solver_balas_rule1_test(inst, env, lp);
+		cpxsol_balas_rule1_test(inst, env, lp);
 	}
 	else if (inst.solver.compare("balasbcrule1-sparse") == 0)
 	{
-		sc_solver_balas_rule1_sparse(inst, env, lp);
+		cpxsol_balas_rule1_sparse(inst, env, lp);
 	}
 	else if (inst.solver.compare("balasbcrule2") == 0)
 	{
-		sc_solver_balas_rule2(inst, env, lp);
+		cpxsol_balas_rule2(inst, env, lp);
 	}
 	else if (inst.solver.compare("maxcol") == 0)
 	{
-		sc_solver_maxcol(inst, env, lp);
+		cpxsol_maxcol(inst, env, lp);
 	}
 	else if (inst.solver.compare("maxcol2") == 0)
 	{
-		sc_solver_maxcol2(inst, env, lp);
+		cpxsol_maxcol2(inst, env, lp);
 	}
 	else if (inst.solver.compare("maxcol-sparse") == 0)
 	{
-		sc_solver_maxcol_sparse(inst, env, lp);
+		cpxsol_maxcol_sparse(inst, env, lp);
 	}
 	else if (inst.solver.compare("maxcoldom") == 0)
 	{
-		sc_solver_maxcol_dom(inst, env, lp);
+		cpxsol_maxcol_dom(inst, env, lp);
 	}
 	else
 	{
@@ -215,122 +213,189 @@ STATUS sc_solver(SCinstance &inst)
 	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_balas_cuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
+/** Dominance presolver routine: see report.
+ *	The function receives a SCP instance, scanning it to find the last column
+ *	with objective equals to 1.0.
+ *	The upper bounds of the variables with cost greater than 1.0 are set to 0. The
+ *	procedure scans these columns to find the ones that must be included in the
+ *	reduced model (resetting the upper bound to 1).
+ */
+STATUS cpxsol_preproc_dominance(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-    int status;
+	char b = 'B', u = 'U';
+	int i, j, ncols, nrows, stat, lastcol, removed_cols = 0;
+	double coeff, obj_val, obj, one = 1.0, rhs, zero = 0.0;
 
-    /*inst.nsccols = CPXgetnumcols(env, lp);
-    inst.nscrows = CPXgetnumrows(env, lp);
+	ncols = CPXgetnumcols(env, lp);
+	nrows = CPXgetnumrows(env, lp);
 
-    inst.balasnodecnt = 0;
+	// skip all columns with cost == 1
+	for (j = 0; j < ncols; ++j)
+	{
+		CPXgetobj(env, lp, &coeff, j, j + 1);
+		if (coeff > 1.0)
+		{
+			lastcol = j;
+			break;
+		}
+	}
+
+	// fix all columns with cost > 1 to 0
+	zero = 0.0;
+	for (j = lastcol; j < ncols; ++j)
+	{
+		CPXchgbds(env, lp, 1, &j, &b, &zero);
+	}
+
+	//printf("Dominance pre-solver receives %d rows and %d columns (selected: %d).\n", nrows, ncols, inst->num_selected_cols);
+
+	// set cplex params
+	CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
+	//CPXsetdblparam(env, CPX_PARAM_TILIM, 5.0);
+
+	CPXsetintparam(env, CPX_PARAM_MIPEMPHASIS, 2);
+	CPXsetintparam(env, CPX_PARAM_REPEATPRESOLVE, 0);
+
+	// pass every column with cost > 1
+	for (j = lastcol; j < ncols; ++j)
+	{
+
+		// set rhs of each row to next column values
+		for (i = 0; i < nrows; ++i)
+		{
+			CPXgetcoef(env, lp, i, j, &rhs);
+			if (CPXchgrhs(env, lp, 1, &i, &rhs))
+				perror("ERROR: error at CPXchgrhs.");
+		}
+
+		// optimize subproblem
+		CPXmipopt(env, lp);
+
+		CPXgetobjval(env, lp, &obj_val);
+		CPXgetobj(env, lp, &obj, j, j);
+		stat = CPXgetstat(env, lp);
+
+		// infeasible solution OR
+		// optimal solution found but obj val > column cost
+		// THEN add this column to the model
+		if (stat == CPXMIP_INFEASIBLE || (stat == CPXMIP_OPTIMAL && (obj_val > obj)))
+		{
+
+			// reset upper bound of the column to 1
+			one = 1.0;
+			CPXchgbds(env, lp, 1, &j, &u, &one);
+		}
+		// column not selected
+		else
+		{
+			removed_cols++;
+		}
+
+		//if (j % 100 == 0) printf("Dominance pre-solver analyses %d of %d columns (removed: %d).\n", j, ncols, removed_cols);
+	}
+
+	// reset rhs of all rows to 1 (standard set cover)
+	one = 1.0;
+	for (i = 0; i < nrows; ++i)
+	{
+		if (CPXchgrhs(env, lp, 1, &i, &one))
+			perror("ERROR: error at CPXchgrhs.");
+	}
+
+	// count selected columns
+	//printf("Dominance pre-solver removed %d columns.\n\n", removed_cols);
+
+	return SC_SUCCESFULL;
+}
+
+STATUS cpxsol_balas_cuts_sparse(SCinstance *inst, CPXENVptr env, CPXLPptr lp)
+{
+    /*inst.balasnodecnt = 0;
     inst.cplexnodecnt = 0;
-
-    status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
-
-    CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
 
     inst.SC_BALAS_NODE_CUTS_NUM = 10;
 
-	status = CPXsetusercutcallbackfunc(env, SCcallbackbalasusercuts_sparse, inst);
+	status = CPXsetusercutcallbackfunc(env, cpxcb_bala_susercuts_sparse, inst);
 
     CPXmipopt(env, lp);*/
 
     return 1;
 }
 
-STATUS sc_solver_balas_cuts(SCinstance &inst, IloEnv env, IloCplex cplex)
+STATUS cpxsol_balas_cuts(SCinstance &inst, IloEnv env, IloCplex cplex)
 {
-	int status;
-
-	/*inst.nsccols = CPXgetnumcols(env, lp);
-	inst.nscrows = CPXgetnumrows(env, lp);
-
-	// usato per contare i tagli in questo caso
+	/*// usato per contare i tagli in questo caso
 	inst.balasnodecnt = 0;
 
-	status = CPXgetobj(env, lp, inst.costs, 0, inst.nsccols - 1);
-
-	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit);
-
-	status = CPXsetusercutcallbackfunc(env, SCcallbackbalasusercuts_test, inst);
+	status = CPXsetusercutcallbackfunc(env, cpxcb_balas_usercuts_test, inst);
 
 	CPXmipopt(env, lp);*/
 
 	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_balas_rule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_balas_rule1(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-	int status;
-
 	/*inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1v1, inst);
+	status = CPXsetbranchcallbackfunc(env, cpxcb_balas_branch_rule1v1, inst);
 
 	CPXmipopt(env, lp);*/
 
-	return 1;
+	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_balas_rule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_balas_rule1_test(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-	int status;
-
 	/*inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1_test, inst);
+	status = CPXsetbranchcallbackfunc(env, cpxcb_balas_branch_rule1_test, inst);
 
 	CPXmipopt(env, lp);*/
 
-	return 1;
+	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_balas_rule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_balas_rule1_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-	int status;
-
 	/*inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1_sparse, inst);
+	status = CPXsetbranchcallbackfunc(env, cpxcb_balas_branch_rule1_sparse, inst);
 
 	CPXmipopt(env, lp);*/
 
-	return 1;
+	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_balas_rule1_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_balas_rule1_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-	int status;
-
 	/*inst.balasCntCode = 0;
 	inst.cplexCntNode = 0;
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule1maxcol_sparse, inst);
+	status = CPXsetbranchcallbackfunc(env, cpxcb_balas_branch_rule1_maxcol_sparse, inst);
 
 	CPXmipopt(env, lp);*/
 
-	return 1;
+	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_balas_rule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_balas_rule2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-	int status;
-
-	/*status = CPXsetbranchcallbackfunc(env, SCcallbackbalasbranchrule2, inst);
+	/*status = CPXsetbranchcallbackfunc(env, cpxcb_balas_branch_rule2, inst);
 
 	CPXmipopt(env, lp);*/
 
-	return 1;
+	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	int status;
 	double timeCurr;
-	std::string thisFuncName = "sc_solver_maxcol";
+	std::string thisFuncName = "cpxsol_maxcol";
 
 	CPXgettime(env, &timeCurr);
 
@@ -341,7 +406,7 @@ STATUS sc_solver_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	CPXsetdblparam(env, CPX_PARAM_TILIM, inst.mipTimeLimit - (timeCurr - inst.timeStart));
 	CPXsetintparam(env, CPX_PARAM_THREADS, inst.numThreads);
 
-	status = CPXsetbranchcallbackfunc(env, callbacks_branch_maxcol, &inst);
+	status = CPXsetbranchcallbackfunc(env, cpxcb_branch_maxcol, &inst);
 	if (status)
 	{
 		std::cerr << thisFuncName + " - CPXsetbranchcallbackfunc return exit status " << status << std::endl;
@@ -358,37 +423,33 @@ STATUS sc_solver_maxcol(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_maxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_maxcol2(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	/*int status;
 
-	status = CPXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol, inst);
+	status = CPXsetbranchcallbackfunc(env, cpxcb_branchmaxcol, inst);
 
 	CPXmipopt(env, lp);*/
 
 	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_maxcol_sparse(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-	int status;
-
-	/*status = CPXsetbranchcallbackfunc(env, SCcallbackbranchmaxcol_sparse, inst);
+	/*status = CPXsetbranchcallbackfunc(env, cpxcb_branchmaxcol_sparse, inst);
 
 	CPXmipopt(env, lp);*/
 
-	return 1;
+	return SC_SUCCESFULL;
 }
 
-STATUS sc_solver_maxcol_dom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_maxcol_dom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
-	int status;
-
-	/*status = CPXsetbranchcallbackfunc(env, SCcallbackbranchmaxcoldom, inst);
+	/*status = CPXsetbranchcallbackfunc(env, cpxcb_branchmaxcoldom, inst);
 
 	CPXmipopt(env, lp);*/
 
-	return 1;
+	return SC_SUCCESFULL;
 }
 
 /**
@@ -400,7 +461,7 @@ STATUS sc_solver_maxcol_dom(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
  * @param lp - CPXLPptr cplex linear programming model
  * @return a status code
  */
-STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	size_t i;
 	size_t j;
@@ -437,7 +498,7 @@ STATUS sc_build_lp2raw(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
  * @param lp - CPXLPptr cplex empty linear programming model to build
  * @return a status code
  */
-STATUS sc_build_raw2lp(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
+STATUS cpxsol_build_raw2lp(SCinstance &inst, CPXENVptr env, CPXLPptr lp)
 {
 	char binCol = 'B';
 	char geSense = 'G';

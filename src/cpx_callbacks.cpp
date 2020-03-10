@@ -1,9 +1,9 @@
 
 #include "balas_dense.hpp"
 #include "balas_sparse.hpp"
-#include "callbacks.hpp"
+#include "cpx_callbacks.hpp"
 
-int CPXPUBLIC callbacks_balas_usercuts_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
+int CPXPUBLIC cpxcb_balas_usercuts_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
         int *useraction_p) {
 
     /*char sense;
@@ -232,9 +232,9 @@ int CPXPUBLIC callbacks_balas_usercuts_sparse(CPXCENVptr env, void *cbdata, int 
 
     TERMINATE:*/
     return 0;
-} // END: callbacks_balas_usercuts_sparse
+} // END: cpxcb_balas_usercuts_sparse
 
-int CPXPUBLIC callbacks_balas_usercuts(CPXCENVptr env, void *cbdata, int wherefrom,
+int CPXPUBLIC cpxcb_balas_usercuts(CPXCENVptr env, void *cbdata, int wherefrom,
 		void *cbhandle, int *useraction_p) {
 
 	/*char *mat, *xchr;
@@ -362,9 +362,9 @@ int CPXPUBLIC callbacks_balas_usercuts(CPXCENVptr env, void *cbdata, int wherefr
 
 	TERMINATE:*/
 	return 0;
-} // END callbacks_balas_usercuts
+} // END cpxcb_balas_usercuts
 
-int CPXPUBLIC callbacks_balas_usercuts_test(CPXCENVptr env, void *cbdata, int wherefrom,
+int CPXPUBLIC cpxcb_balas_usercuts_test(CPXCENVptr env, void *cbdata, int wherefrom,
 		void *cbhandle, int *useraction_p) {
 
 	/*char *mat, *xchr;
@@ -517,10 +517,9 @@ int CPXPUBLIC callbacks_balas_usercuts_test(CPXCENVptr env, void *cbdata, int wh
 
 	TERMINATE:*/
 	return 0;
-} // END callbacks_balas_usercuts_test
+} // END cpxcb_balas_usercuts_test
 
-
-int CPXPUBLIC callbacks_branch_maxcol(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_branch_maxcol(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -661,9 +660,9 @@ int CPXPUBLIC callbacks_branch_maxcol(CPXCENVptr env, void *cbdata,
 	free(mat);
 
 	return 0;
-} // END callbacks_branch_maxcol
+} // END cpxcb_branch_maxcol
 
-int CPXPUBLIC callbacks_branch_maxcol2(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_branch_maxcol2(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -821,9 +820,9 @@ int CPXPUBLIC callbacks_branch_maxcol2(CPXCENVptr env, void *cbdata,
 	free(mat);*/
 
 	return 0;
-} // END callbacks_branch_maxcol2
+} // END cpxcb_branch_maxcol2
 
-int CPXPUBLIC callbacks_branch_maxcol_sparse(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_branch_maxcol_sparse(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -973,9 +972,9 @@ int CPXPUBLIC callbacks_branch_maxcol_sparse(CPXCENVptr env, void *cbdata,
 	free(rmatindred);*/
 
 	return 0;
-} // END callbacks_branch_maxcol_sparse
+} // END cpxcb_branch_maxcol_sparse
 
-int CPXPUBLIC callback_branch_maxcol_dom(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_branch_maxcol_dom(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -1267,9 +1266,9 @@ int CPXPUBLIC callback_branch_maxcol_dom(CPXCENVptr env, void *cbdata,
 	free(rmatindred);*/
 
 	return 0;
-} // END callback_branch_maxcol_dom
+} // END cpxcb_branch_maxcol_dom
 
-int CPXPUBLIC callbacks_balas_branch_rule1v1(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_balas_branch_rule1v1(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -1440,9 +1439,9 @@ int CPXPUBLIC callbacks_balas_branch_rule1v1(CPXCENVptr env, void *cbdata,
 
 	TERMINATE:*/
 	return 0;
-} // END callbacks_balas_branch_rule1v1
+} // END cpxcb_balas_branch_rule1v1
 
-int CPXPUBLIC callbacks_balas_branch_rule1_test(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_balas_branch_rule1_test(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -1643,9 +1642,9 @@ int CPXPUBLIC callbacks_balas_branch_rule1_test(CPXCENVptr env, void *cbdata,
 
 	TERMINATE:*/
 	return 0;
-} // END callbacks_balas_branch_rule1_test
+} // END cpxcb_balas_branch_rule1_test
 
-int CPXPUBLIC callbacks_balas_branch_rule1_sparse(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_balas_branch_rule1_sparse(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -1950,9 +1949,9 @@ int CPXPUBLIC callbacks_balas_branch_rule1_sparse(CPXCENVptr env, void *cbdata,
 
 	TERMINATE:*/
 	return 0;
-} // END callbacks_balas_branch_rule1_sparse
+} // END cpxcb_balas_branch_rule1_sparse
 
-int CPXPUBLIC callbacks_balas_branch_rule1_maxcol_sparse(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_balas_branch_rule1_maxcol_sparse(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -2298,9 +2297,9 @@ int CPXPUBLIC callbacks_balas_branch_rule1_maxcol_sparse(CPXCENVptr env, void *c
 
 	TERMINATE:*/
 	return 0;
-} // END callbacks_balas_branch_rule1_maxcol_sparse
+} // END cpxcb_balas_branch_rule1_maxcol_sparse
 
-int CPXPUBLIC callbacks_balas_branch_rule2(CPXCENVptr env, void *cbdata,
+int CPXPUBLIC cpxcb_balas_branch_rule2(CPXCENVptr env, void *cbdata,
 		int wherefrom, void *cbhandle, int brtype, int sos, int nodecnt,
 		int bdcnt, const int *nodebeg, const int *indices, const char *lu,
 		const double *bd, const double * nodeest, int *useraction_p) {
@@ -2555,9 +2554,9 @@ int CPXPUBLIC callbacks_balas_branch_rule2(CPXCENVptr env, void *cbdata,
 	free(rmatindred);*/
 
 	return 0;
-} // END callbacks_balas_branch_rule2
+} // END cpxcb_balas_branch_rule2
 
-char *callbacks_get_matrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
+char *cpxcb_get_matrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
 		int *rowssc2red, int *colsred2sc, int *colssc2red, int *nrowsred,
 		int *ncolsred) {
 
@@ -2640,9 +2639,9 @@ char *callbacks_get_matrix(CPXCENVptr env, CPXLPptr lp, int *rowsred2sc,
 	free(rmatval);*/
 
 	return mat;
-} // END: callbacks_get_matrix
+} // END: cpxcb_get_matrix
 
-int callbacks_make_cplex_branch(CPXCENVptr env, void *cbdata, int wherefrom,
+int cpxcb_make_cplex_branch(CPXCENVptr env, void *cbdata, int wherefrom,
 		int ncols, SCinstance *inst) {
 
 	/*int status = 0;
@@ -2666,9 +2665,9 @@ int callbacks_make_cplex_branch(CPXCENVptr env, void *cbdata, int wherefrom,
 	inst->cplexnodecnt++;*/
 
 	return 0;
-} // END: callbacks_make_cplex_branch
+} // END: cpxcb_make_cplex_branch
 
-int callbacks_make_balas_branch_rule1v1(CPXCENVptr env, void *cbdata, int wherefrom,
+int cpxcb_make_balas_branch_rule1v1(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, char *qmat, int p, int ncols, int q,
 		SCinstance *inst) {
 	/*char *varlu;
@@ -2795,9 +2794,9 @@ int callbacks_make_balas_branch_rule1v1(CPXCENVptr env, void *cbdata, int wheref
 	free(varbd);*/
 
 	return 0;
-} // END: callbacks_make_balas_branch_rule1v1
+} // END: cpxcb_make_balas_branch_rule1v1
 
-int callbacks_make_balas_branch_rule1v2(CPXCENVptr env, void *cbdata, int wherefrom,
+int cpxcb_make_balas_branch_rule1v2(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, char *qmat, int p, int ncols, int q,
 		SCinstance *inst) {
 	/*char *varlu;
@@ -2883,9 +2882,9 @@ int callbacks_make_balas_branch_rule1v2(CPXCENVptr env, void *cbdata, int wheref
 	free(varbd);*/
 
 	return 0;
-} // END: callbacks_make_balas_branch_rule1v2
+} // END: cpxcb_make_balas_branch_rule1v2
 
-int callbacks_make_balas_branch_rule2(CPXCENVptr env, void *cbdata, int wherefrom,
+int cpxcb_make_balas_branch_rule2(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, char *mat, int nrows, int ncols,
 		const int *colsred2sc, SCinstance *inst) {
 
@@ -3004,9 +3003,9 @@ int callbacks_make_balas_branch_rule2(CPXCENVptr env, void *cbdata, int wherefro
 	free(varbd);*/
 
 	return 0;
-} // END: callbacks_make_balas_branch_rule2
+} // END: cpxcb_make_balas_branch_rule2
 
-int callbacks_make_balas_branch_rule1v1_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
+int cpxcb_make_balas_branch_rule1v1_sparse(CPXCENVptr env, void *cbdata, int wherefrom,
 		double objval, int *rqbeg, int *rqind, int p, int ncols, int q,
 		SCinstance *inst) {
 
@@ -3123,4 +3122,4 @@ int callbacks_make_balas_branch_rule1v1_sparse(CPXCENVptr env, void *cbdata, int
 	free(rval);*/
 
 	return 0;
-} // END: callbacks_make_balas_branch_rule1v1_sparse
+} // END: cpxcb_make_balas_branch_rule1v1_sparse

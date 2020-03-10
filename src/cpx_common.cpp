@@ -1,5 +1,5 @@
 
-#include "common.hpp"
+#include "cpx_common.hpp"
 
 /**
  * Initialize all configuration variables in SCinstance.
@@ -7,7 +7,7 @@
  * @param inst - SCinstance
  * @return a status code
  */
-STATUS comm_initialization(SCinstance &inst)
+STATUS cpxcomm_initialization(SCinstance &inst)
 {
     inst.mipNodesel = CPX_NODESEL_BESTBOUND;
     inst.mipVarsel = CPX_VARSEL_DEFAULT;
@@ -33,16 +33,16 @@ STATUS comm_initialization(SCinstance &inst)
  * @param argv - the input arguments array
  * @return a status code
  */
-STATUS comm_read_params(SCinstance &inst, int argc, char *argv[])
+STATUS cpxcomm_read_params(SCinstance &inst, int argc, char *argv[])
 {
     try
     {
         po::options_description desc("Allowed options");
         desc.add_options()
         ("help", "produce help message")
-        ("presolver", po::value<string>(&inst.presolver)->default_value("none"), "set presolver, options: 'none' (default), 'cplex', 'dominance'")
-        ("solver", po::value<string>(&inst.solver)->default_value("cplex"), "set solver, options: 'cplex' (default), 'balasbcrule1', 'balasbcrule1-sparse', 'balasbcrule2', 'maxcol', 'maxcol2', 'maxcol-sparse'")
-        ("inputFile", po::value<string>(&inst.inputFilePath), "set input file path")
+        ("presolver", po::value<std::string>(&inst.presolver)->default_value("none"), "set presolver, options: 'none' (default), 'cplex', 'dominance'")
+        ("solver", po::value<std::string>(&inst.solver)->default_value("cplex"), "set solver, options: 'cplex' (default), 'balasbcrule1', 'balasbcrule1-sparse', 'balasbcrule2', 'maxcol', 'maxcol2', 'maxcol-sparse'")
+        ("inputFile", po::value<std::string>(&inst.inputFilePath), "set input file path")
         ("verbosity", po::value<int>(&inst.verbosityLevel)->default_value(2), "set verbosity level")
         ("numThreads", po::value<int>(&inst.numThreads)->default_value(1), "set number of threads")
         ("timeLimit", po::value<double>(&inst.mipTimeLimit)->default_value(DBL_MAX), "set solver time limit (s)")
@@ -59,22 +59,22 @@ STATUS comm_read_params(SCinstance &inst, int argc, char *argv[])
 
         if (vm.count("help"))
         {
-            cout << desc << "\n";
+            std::cout << desc << std::endl;
             exit(0);
         }
 
         std::printf("####################          PARAMETERS          ####################\n\n");
         if (vm.count("presolver"))
         {
-            std::printf("%40s %s\n", "Presolver set to ", &vm["presolver"].as<string>()[0]);
+            std::printf("%40s %s\n", "Presolver set to ", &vm["presolver"].as<std::string>()[0]);
         }
         if (vm.count("solver"))
         {
-            std::printf("%40s %s\n", "Solver set to ", &vm["solver"].as<string>()[0]);
+            std::printf("%40s %s\n", "Solver set to ", &vm["solver"].as<std::string>()[0]);
         }
         if (vm.count("inputFile"))
         {
-            std::printf("%40s %s\n", "Input file path set to ", &vm["inputFile"].as<string>()[0]);
+            std::printf("%40s %s\n", "Input file path set to ", &vm["inputFile"].as<std::string>()[0]);
         }
         else
         {
@@ -119,7 +119,7 @@ STATUS comm_read_params(SCinstance &inst, int argc, char *argv[])
         }
         std::printf("\n");
     }
-    catch (exception &e)
+    catch (std::exception &e)
     {
         std::cerr << "error: " << e.what() << "\n";
         return SC_GENERIC_ERROR;
@@ -142,7 +142,7 @@ STATUS comm_read_params(SCinstance &inst, int argc, char *argv[])
  * @param msg - the message to print
  * @return a status code
  */
-STATUS comm_log(SCinstance &inst, int level, std::string msg)
+STATUS cpxcomm_log(SCinstance &inst, int level, std::string msg)
 {
     if (inst.verbosityLevel > level)
     {
@@ -158,7 +158,7 @@ STATUS comm_log(SCinstance &inst, int level, std::string msg)
  * @param inst - SCinstance
  * @returns a status code
  */
-STATUS comm_read_instance_dns(SCinstance &inst)
+STATUS cpxcomm_read_instance_dns(SCinstance &inst)
 {
     int m;
     int n;
@@ -203,7 +203,7 @@ STATUS comm_read_instance_dns(SCinstance &inst)
  * @param &inst - SCinstance
  * @returns a status code
  */
-STATUS comm_read_instance_spr(SCinstance &inst)
+STATUS cpxcomm_read_instance_spr(SCinstance &inst)
 {
     int m;
     int n;

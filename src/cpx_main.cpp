@@ -1,19 +1,18 @@
-
-#include "main.hpp"
-#include "sc.hpp"
+#include "cpx_main.hpp"
+#include "cpx_solver.hpp"
 
 int main(int argc, char *argv[])
 {
 	SCinstance inst;
 
-	comm_initialization(inst);
-	if (comm_read_params(inst, argc, argv))
+	cpxcomm_initialization(inst);
+	if (cpxcomm_read_params(inst, argc, argv))
 	{
 		std::printf("Type --help to display available options.\n");
 		return 0;
 	}
 
-	sc_solver(inst);
+	cpxsol(inst);
 
 	return 0;
 }

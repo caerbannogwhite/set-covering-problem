@@ -1,8 +1,7 @@
-P=scsolver
-SHELL=/bin/sh
 
 ###################          CHANGE THESE PATHS            ####################
 
+SHELL=/bin/sh
 CPLEX_HOME=/opt/ibm/ILOG/CPLEX_Studio128
 BOOST_HOME=/usr/local/boost_1_71_0
 
@@ -14,9 +13,30 @@ CFLAGS=-g -Wall -O2 -fpermissive -DIL_STD
 LDLIBS=-L$(CPLEX_HOME)/cplex/lib/x86-64_linux/static_pic -L$(CPLEX_HOME)/concert/lib/x86-64_linux/static_pic -lcplex -L$(BOOST_HOME)/stage/lib -lboost_program_options -lm -lpthread -ldl -larmadillo
 INC=-I$(CPLEX_HOME)/cplex/include/ -I$(CPLEX_HOME)/concert/include/ -I$(BOOST_HOME)
 
-$(P) : balas_dense balas_sparse callbacks common main preprocessing sc
-	$(CC) $(CFLAGS) lib/balas_dense.o lib/balas_sparse.o lib/callbacks.o lib/common.o lib/main.o lib/preprocessing.o lib/sc.o -o $@ $(LDLIBS)
+
+########################          CPXSOL         ##############################
+
+cpxsol : balas_dense balas_sparse cpx_callbacks cpx_common cpx_main cpx_solver
+	$(CC) $(CFLAGS) lib/balas_dense.o lib/balas_sparse.o lib/cpx_callbacks.o lib/cpx_common.o lib/cpx_main.o lib/cpx_solver.o -o $@ $(LDLIBS)
 	mv $@ lib
+
+cpx_callbacks : src/cpx_callbacks.cpp
+	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
+	mv $@.o lib
+
+cpx_common : src/cpx_common.cpp
+	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
+	mv $@.o lib
+
+cpx_main : src/cpx_main.cpp
+	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
+	mv $@.o lib
+
+cpx_solver : src/cpx_solver.cpp
+	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
+	mv $@.o lib
+
+########################          END CPXSOL         ##########################
 
 balas_dense : src/balas_dense.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
@@ -26,27 +46,26 @@ balas_sparse : src/balas_sparse.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
 	mv $@.o lib
 
-callbacks : src/callbacks.cpp
+
+########################          BALSOL         ##############################
+
+balsol : balas_dense balas_sparse balas_common balas_main balas_solver
+	$(CC) $(CFLAGS) lib/balas_dense.o lib/balas_sparse.o lib/balas_common.o lib/balas_main.o lib/balas_solver.o -o $@ $(LDLIBS)
+	mv $@ lib
+
+balas_common : src/balas_common.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
 	mv $@.o lib
 
-common : src/common.cpp
+balas_main : src/balas_main.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
 	mv $@.o lib
 
-main : src/main.cpp
-	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
-	mv $@.o lib
-
-preprocessing : src/preprocessing.cpp
-	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
-	mv $@.o lib
-
-sc : src/sc.cpp
+balas_solver : src/balas_solver.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
 	mv $@.o lib
 
 clean:
-	rm -f lib/$(P) lib/*.o
+	rm -f lib/cpxsol lib/*.o
 
 .PHONY: clean
