@@ -477,12 +477,12 @@ int baldns_over_sat_rows(arma::mat &mat, arma::vec &x)
 }
 
 /**
- * Given a SCP matrix and a SCP solution x,
+ * Given a SCP dense matrix and a SCP solution x,
  * return the number of removed columns
  * from x (to make x a prime cover).
  * 
- * @param mat - arma::mat a SCP matrix
- * @param x - arma::vec a SCP solution
+ * @param mat - arma::mat a SCP dense matrix
+ * @param x - arma::vec a SCP dense solution
  * @return the number of removed columns from x
  */
 int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
@@ -495,14 +495,14 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 	(*matDotXPtr) = mat * x;
 
 	cntRemoved = 0;
-	for (j = mat.n_cols; j--;)
+	for (j = mat.n_cols; j >= 0; --j)
 	{
 		if (x(j) > SC_EPSILON_SMALL)
 		{
 			x(j) = 0.0;
 			for (i = 0; i < mat.n_rows; ++i)
 			{
-				if ((mat(i, j) > SC_EPSILON_SMALL) && ((*matDotXPtr)(i) < 2.0))
+				if ((mat(i, j) > SC_EPSILON_SMALL) && ((*matDotXPtr)(i) < (2.0 - SC_EPSILON_SMALL)))
 				{
 					x(j) = 1.0;
 					break;
@@ -528,7 +528,7 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
  * @param x - arma::vec a SCP solution vector
  * @return true if x covers mat, false otherwise
  */
-bool baldns_is_cover(const arma::mat &mat, arma::vec &x)
+bool baldns_is_cover(const arma::mat &mat, const arma::vec &x)
 {
 	return arma::all((mat * x) > (1.0 - SC_EPSILON_SMALL));
 }

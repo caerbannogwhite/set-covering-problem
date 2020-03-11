@@ -9,7 +9,7 @@ int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double 
 
 int baldns_over_sat_rows(arma::mat &mat, arma::vec &x);
 int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x);
-bool baldns_is_cover(const arma::mat &mat, arma::vec &x);
+bool baldns_is_cover(const arma::mat &mat, const arma::vec &x);
 double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj, arma::vec &x, const int whichFunc);
 double baldns_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x);
 double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x, arma::vec &s, arma::vec &u);

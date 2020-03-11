@@ -15,7 +15,7 @@ LDLIBSCPX=-L$(CPLEX_HOME)/cplex/lib/x86-64_linux/static_pic -lcplex $(LDLIBS)
 INC=-I$(BOOST_HOME)
 INCCPX=-I$(CPLEX_HOME)/cplex/include/ $(INC)
 
-####    COLORS
+####    COLORS AND FORMATS
 BOLD=\e[1m
 BOLDEND=\e[21m
 COLEND=\e[39m

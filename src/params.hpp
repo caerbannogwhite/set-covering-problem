@@ -1,9 +1,9 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#define SC_EPSILON_MED 1e-5
-#define SC_EPSILON_SMALL 1e-12
-#define BIG_M 1e20
+#define SC_EPSILON_MED 1E-5
+#define SC_EPSILON_SMALL 1E-12
+#define BIG_M 1E20
 
 enum STATUS
 {

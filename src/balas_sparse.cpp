@@ -1,74 +1,76 @@
-
 #include "balas_sparse.hpp"
 
-/*int SCprimecover_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg,
-						const int *cmatind, const int nrows, const int ncols, int *xind,
-						const int xindlen)
+/**
+ * Given a SCP sparse matrix and a SCP solution x,
+ * return the number of removed columns
+ * from x (to make x a prime cover).
+ * 
+ * @param mat - arma::mat a SCP sparse matrix
+ * @param x - arma::vec a SCP sparse solution
+ * @return the number of removed columns from x
+ */
+int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
 {
+	bool remove;
+	int col;
+	int cntRemoved;
 
-	char flag;
-	int i, j, k, removedcnt;
-	int *matdotx = (int *)malloc(nrows * sizeof(int));
+	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
+	(*matDotXPtr) = mat * x;
 
-	for (i = 0; i < nrows; ++i)
+	cntRemoved = 0;
+	for (auto jt = x.begin(); jt != x.end(); ++jt)
 	{
-		matdotx[i] = 0;
-		j = rmatbeg[i];
-		k = 0;
-		while ((j < rmatbeg[i + 1]) && (k < xindlen))
+		col = jt.col();
+		remove = true;
+		for (auto it = mat.begin_col(col); it != mat.end_col(col); ++it)
 		{
-			if (rmatind[j] == xind[k])
+			if ((mat(it.row(), col) > SC_EPSILON_SMALL) && ((*matDotXPtr)(it.row()) < (2.0 - SC_EPSILON_SMALL)))
 			{
-				matdotx[i]++;
-				j++;
-				k++;
-				continue;
-			}
-
-			if (rmatind[j] < xind[k])
-			{
-				j++;
-				continue;
-			}
-
-			if (rmatind[j] > xind[k])
-			{
-				k++;
-				continue;
-			}
-		}
-	}
-
-	removedcnt = 0;
-	for (j = xindlen - 1; j > 0; --j)
-	{
-		flag = 1;
-		for (k = cmatbeg[xind[j]]; k < cmatbeg[xind[j] + 1]; ++k)
-		{
-			if (matdotx[cmatind[k]] < 2)
-			{
-				flag = 0;
+				remove = false;
 				break;
 			}
 		}
 
-		if (flag)
+		if (remove)
 		{
-			for (k = cmatbeg[xind[j]]; k < cmatbeg[xind[j] + 1]; ++k)
-			{
-				matdotx[cmatind[k]]--;
-			}
-
-			xind[j] = -1;
-			removedcnt++;
+			x(col) = 0.0;
+			++cntRemoved;
+			(*matDotXPtr) -= mat.col(col);
 		}
 	}
-	free(matdotx);
 
-	return removedcnt;
+	x.remove_zeros();
+
+	return cntRemoved;
 }
 
-double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
+/**
+ * Given a SCP sparse matrix mat and a solution vector x,
+ * return true if x is a cover for mat, false otherwise.
+ * 
+ * @param mat - arma::sp_mat SCP sparse matrix
+ * @param x - arma::sp_mat a SCP sparse solution vector
+ * @return true if x covers mat, false otherwise
+ */
+bool baldns_is_cover(arma::sp_mat &mat, arma::sp_mat &x)
+{
+	std::unique_ptr<arma::mat> matDotXPtr;
+	(*matDotXPtr) = mat * x;
+
+	matDotXPtr->for_each([](arma::mat::elem_type &e) { if ( e < 1.0) return false; });
+
+	/*for (auto it = matDotXPtr->cbegin(); it != matDotXPtr->cend(); ++it)
+	{
+		if (*it < (1.0 -  SC_EPSILON_SMALL))
+		{
+			return false;
+		}
+	}*/
+	return true;
+}
+
+/*double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
 								 const double *obj, const int nrows, const int ncols, int *xind, int *xindlen,
 								 const int whichfunc)
 {
@@ -279,112 +281,6 @@ for (i = 0; i < *xindlen; ++i)
 qsort(xind, *xindlen, sizeof(int), SCint_cmp);
 
 return zu;
-}
-
-int SCdual0_sparse(const int *rmatbeg, const int *rmatind, double *obj, const int nrows,
-				   const int ncols, double *u, double *s)
-{
-
-	char le = 'L';
-	int error, i, j, nzcnt, status;
-	double *cmatval;
-
-	nzcnt = rmatbeg[nrows];
-	cmatval = (double *)malloc(nzcnt * sizeof(double));
-	for (i = 0; i < nzcnt; ++i)
-	{
-		cmatval[i] = 1.0;
-	}
-
-	CPXENVptr env = CPXopenCPLEX(&error);
-	CPXLPptr lp = CPXcreateprob(env, &error, "dual");
-
-	CPXaddcols(env, lp, (int)nrows, nzcnt, cmatval, rmatbeg, rmatind, cmatval, NULL, NULL, NULL);
-
-	for (j = 0; j < ncols; ++j)
-	{
-		CPXnewrows(env, lp, 1, &obj[j], &le, NULL, NULL);
-	}
-
-	// Maximize
-	CPXchgobjsen(env, lp, CPX_MAX);
-	CPXchgprobtype(env, lp, CPXPROB_LP);
-
-	status = CPXlpopt(env, lp);
-	if (status)
-	{
-		printf("SCdual0_sparse - CPXmipopt error: %d\n", status);
-	}
-
-	// Dual vector
-	status = CPXgetx(env, lp, u, 0, (int)(nrows - 1));
-	if (status)
-	{
-		printf("SCdual0_sparse - CPXgetx error: %d\n", status);
-	}
-
-	for (j = 0; j < ncols; ++j)
-	{
-		s[j] = obj[j];
-	}
-
-	for (i = 0; i < nrows; ++i)
-	{
-		for (j = rmatbeg[i]; j < rmatbeg[i + 1]; ++j)
-		{
-			s[rmatind[j]] -= u[i];
-		}
-	}
-
-	CPXfreeprob(env, &lp);
-	CPXcloseCPLEX(&env);
-
-	free(cmatval);
-
-	// char *senses;
-	// int error, i, j, nzcnt, status;
-	// double *cmatval;
-
-	// nzcnt = rmatbeg[nrows];
-	// cmatval = (double *) malloc(nzcnt * sizeof(double));
-	// for (i = 0; i < nzcnt; ++i) {
-	// 	cmatval[i] = 1.0;
-	// }
-
-	// senses = (char *) malloc(nrows * sizeof(char));
-	// for (i = 0; i < nrows; ++i) {
-	// 	senses[i] = 'G';
-	// }
-
-	// CPXENVptr env = CPXopenCPLEX(&error);
-	// CPXLPptr lp = CPXcreateprob(env, &error, "dual");
-
-	// CPXaddrows(env, lp, (int) ncols, (int) nrows, nzcnt, cmatval, senses, rmatbeg, rmatind, cmatval, NULL, NULL);
-
-	// for (j = 0; j < ncols; ++j) {
-	// 	CPXchgobj(env, lp, 1, &j, &obj[j]);
-	// }
-
-	// // Maximize
-	// CPXchgprobtype(env, lp, CPXPROB_LP);
-
-	// status = CPXlpopt(env, lp);
-	// if (status) { printf("SCdual0_sparse - CPXmipopt error: %d\n", status); }
-
-	// // Dual vector
-	// status = CPXgetpi(env, lp, u, 0, (int) (nrows - 1));
-	// if (status) { printf("SCdual0_sparse - CPXgetx error: %d\n", status); }
-
-	// status = CPXgetdj(env, lp, s, 0, (int) (ncols - 1));
-	// if (status) { printf("SCdual0_sparse - CPXgetdj error: %d\n", status); }
-
-	// CPXfreeprob(env, &lp);
-	// CPXcloseCPLEX(&env);
-
-	// free(cmatval);
-	// free(senses);
-
-	return 0;
 }
 
 int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nrows, const int *xind,
