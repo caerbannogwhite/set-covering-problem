@@ -5,8 +5,8 @@
  * return the number of removed columns
  * from x (to make x a prime cover).
  * 
- * @param mat - arma::mat a SCP sparse matrix
- * @param x - arma::vec a SCP sparse solution
+ * @param mat - arma::sp_mat a SCP sparse matrix
+ * @param x - arma::sp_mat a SCP sparse solution ROW vector
  * @return the number of removed columns from x
  */
 int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
@@ -16,10 +16,10 @@ int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
 	int cntRemoved;
 
 	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
-	(*matDotXPtr) = mat * x;
+	(*matDotXPtr) = mat * x.t();
 
 	cntRemoved = 0;
-	for (auto jt = x.begin(); jt != x.end(); ++jt)
+	for (auto jt = --x.end(); ; --jt) // Reverse iteration
 	{
 		col = jt.col();
 		remove = true;
@@ -38,6 +38,11 @@ int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
 			++cntRemoved;
 			(*matDotXPtr) -= mat.col(col);
 		}
+
+		if (jt == x.begin()) // Check stop condition
+		{
+			break;
+		}
 	}
 
 	x.remove_zeros();
@@ -50,15 +55,14 @@ int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
  * return true if x is a cover for mat, false otherwise.
  * 
  * @param mat - arma::sp_mat SCP sparse matrix
- * @param x - arma::sp_mat a SCP sparse solution vector
+ * @param x - arma::sp_mat a SCP sparse solution ROW vector
  * @return true if x covers mat, false otherwise
  */
-bool baldns_is_cover(arma::sp_mat &mat, arma::sp_mat &x)
+bool balspr_is_cover(arma::sp_mat &mat, arma::sp_mat &x)
 {
-	std::unique_ptr<arma::mat> matDotXPtr;
-	(*matDotXPtr) = mat * x;
-
-	matDotXPtr->for_each([](arma::mat::elem_type &e) { if ( e < 1.0) return false; });
+	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
+	(*matDotXPtr) = mat * x.t();
+	return arma::all((*matDotXPtr) > (1.0 - SC_EPSILON_SMALL));
 
 	/*for (auto it = matDotXPtr->cbegin(); it != matDotXPtr->cend(); ++it)
 	{
@@ -66,8 +70,8 @@ bool baldns_is_cover(arma::sp_mat &mat, arma::sp_mat &x)
 		{
 			return false;
 		}
-	}*/
-	return true;
+	}
+	return true;*/
 }
 
 /*double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,

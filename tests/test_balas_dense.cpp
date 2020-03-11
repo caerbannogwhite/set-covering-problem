@@ -143,7 +143,7 @@ TEST_CASE("BALAS DENSE - baldns_make_prime_cover", "[BALAS DENSE]")
     REQUIRE(fabs(x(3)) < SC_EPSILON_SMALL);
 }
 
-TEST_CASE("BALAS DENSE - baldns_heur_primal_0", "[BALAS DENSE]")
+/*TEST_CASE("BALAS DENSE - baldns_heur_primal_0", "[BALAS DENSE]")
 {
     double objVal;
     arma::mat mat = arma::mat(4, 4);
@@ -178,4 +178,4 @@ TEST_CASE("BALAS DENSE - baldns_heur_primal_0", "[BALAS DENSE]")
     baldns_heur_primal_0(mat, obj, x, 3);
 
     std::cout << x << std::endl;
-}
+}*/

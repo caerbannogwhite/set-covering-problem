@@ -495,7 +495,7 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 	(*matDotXPtr) = mat * x;
 
 	cntRemoved = 0;
-	for (j = mat.n_cols; j >= 0; --j)
+	for (j = mat.n_cols - 1; j >= 0; --j)
 	{
 		if (x(j) > SC_EPSILON_SMALL)
 		{

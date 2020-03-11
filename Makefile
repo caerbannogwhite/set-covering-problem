@@ -2,8 +2,10 @@
 ###################          CHANGE THESE PATHS            ####################
 
 SHELL=/bin/sh
-CPLEX_HOME=/opt/ibm/ILOG/CPLEX_Studio128
+
 BOOST_HOME=/usr/local/boost_1_71_0
+CPLEX_HOME=/opt/ibm/ILOG/CPLEX_Studio128
+PROJ_HOME=/home/macs/coding/optimization/set-covering-problem
 
 ###############################################################################
 
@@ -12,7 +14,7 @@ CFLAGS=-g -Wall -O2 -fpermissive
 
 LDLIBS=-L$(BOOST_HOME)/stage/lib -lboost_program_options -lm -lpthread -ldl -larmadillo
 LDLIBSCPX=-L$(CPLEX_HOME)/cplex/lib/x86-64_linux/static_pic -lcplex $(LDLIBS) 
-INC=-I$(BOOST_HOME)
+INC=-I$(BOOST_HOME) -I$(PROJ_HOME)/src
 INCCPX=-I$(CPLEX_HOME)/cplex/include/ $(INC)
 
 ####    COLORS AND FORMATS
@@ -47,7 +49,8 @@ cpx_solver : src/cpx_solver.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INCCPX)
 	@mv $@.o lib
 
-########################          END CPXSOL         ##########################
+
+########################          BALAS LIB         ###########################
 
 balas_dense : src/balas_dense.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
@@ -77,7 +80,35 @@ balas_solver : src/balas_solver.cpp
 	$(CC) $(CFLAGS) -c src/$@.cpp $(INC)
 	@mv $@.o lib
 
+
+#########################         UNIT TESTS       ############################
+
+test_balas_dense : balas_dense
+	$(CC) $(CFLAGS) -c tests/$@.cpp $(INC)
+	$(CC) $(CFLAGS) $@.o lib/balas_dense.o $(LDLIBS) -o $@
+	@rm $@.o
+	@mv $@ tests
+	@echo "$(BOLD)[$(COLGREEN)COMPLETE$(COLEND)] Rule test_balas_dense$(BOLDEND)"
+
+test_balas_sparse : balas_sparse
+	$(CC) $(CFLAGS) -c tests/$@.cpp $(INC)
+	$(CC) $(CFLAGS) $@.o lib/balas_sparse.o $(LDLIBS) -o $@
+	@rm $@.o
+	@mv $@ tests
+	@echo "$(BOLD)[$(COLGREEN)COMPLETE$(COLEND)] Rule test_balas_sparse$(BOLDEND)"
+
+unittests-all: test_balas_dense test_balas_sparse
+	@cd tests && ./test_balas_dense
+	@cd tests && ./test_balas_sparse
+
+unittests-balas_dense: test_balas_dense
+	@cd tests && ./test_balas_dense
+
+unittests-balas_sparse: test_balas_sparse
+	@cd tests && ./test_balas_sparse
+
 clean:
 	@rm -f lib/balsol lib/cpxsol lib/*.o
+	@cd tests && rm test_balas_dense test_balas_sparse
 
 .PHONY: clean
