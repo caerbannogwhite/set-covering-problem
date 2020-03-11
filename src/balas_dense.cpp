@@ -854,7 +854,6 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 	firstTime = true;
 	while (rSetPtr->size() > 0)
 	{
-
 		rowIdx = rSetPtr->back().second;
 		rSetPtr->pop_back();
 
@@ -955,6 +954,106 @@ int baldns_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u,
 
 		zLow -= val;
 		u(rowIdx) = 0.0;
+	}
+
+	return 0;
+}
+
+int baldns_dual_subgrad(arma::mat &mat, arma::vec &obj, arma::vec &x,
+							 arma::vec &u)
+{
+	int cntIter;
+	int cntUnchgIter;
+	size_t i;
+	size_t j;
+	double coeffL;
+	double zUpp;
+	double zLow;
+	double zLowPrev;
+	double sigma;
+	double subgradNorm;
+
+	int k;
+	int omega;
+	double lambda;
+	double epsilon;
+	double delta;
+
+	std::unique_ptr<std::unordered_set<int>> nSetPtr;
+	std::unique_ptr<arma::vec> redCostsPtr;
+	std::unique_ptr<arma::vec> tmpVecPtr;
+
+	for (j = 0; j < mat.n_cols; ++j)
+	{
+		nSetPtr->insert(j);
+	}
+
+	(*redCostsPtr) = obj - (u * mat);
+
+	baldns_heur_dual_1(mat, x, u, *redCostsPtr);
+
+	zUpp = arma::dot(obj, x);
+	zLow = arma::sum(u);
+
+
+	cntIter = 0;
+	cntUnchgIter = 0;
+	while (zUpp > zLow)	// Solve L(u(t)) and define u(t+1)
+	{
+		for (i = 0; i < mat.n_rows; ++i) // Cover optimally the rows in M
+		{
+			(*tmpVecPtr) = obj - (u * mat);
+			j = tmpVecPtr->index_min();
+			x(j) = 1.0;
+			nSetPtr->erase(j);
+		}
+
+		for (auto jt = nSetPtr->cbegin(); jt != nSetPtr->cend(); ++jt) // Assign values to remaining x_j(u(t))
+		{
+			if (obj(*jt) < arma::dot(u, mat.col(*jt)))
+			{
+				x(*jt) = 1.0;
+			} else
+			{
+				x(*jt) = 0.0;
+			}
+		}
+
+		coeffL = arma::sum(u) + arma::dot((obj - (u * mat)), x);
+		zLow = std::max(zLow, coeffL);
+
+		// TODO: Compute subgradient: put it in tmpVec
+		//for (auto it = )
+		{
+
+		}
+
+		if (fabs(zLow - zLowPrev) < SC_EPSILON_SMALL)
+		{
+			++cntUnchgIter;
+		}
+		zLowPrev = zLow;
+
+		if (cntUnchgIter >= k)
+		{
+			lambda = lambda / 2.0;
+			cntUnchgIter = 0;
+		}
+
+		// Compute step length sigma
+		subgradNorm = arma::norm((*tmpVecPtr));
+		sigma = lambda * (zUpp - zLow) / subgradNorm;
+
+		// Stop conditions
+		if ((sigma < epsilon) || (subgradNorm < delta) || (cntIter >= omega))
+		{
+			break;
+		}
+
+		// Update dual solution u
+
+
+		++cntIter;
 	}
 
 	return 0;

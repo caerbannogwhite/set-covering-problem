@@ -45,11 +45,10 @@ $ ./lib/cpxsol --inputFile data/scpnre1.txt --solver cplex --timeLimit 10
 |---------------|-----------------|
 | **Presolver** | none (default)  |
 |               | cpxdom          |
-|               |                 |
 | **Solver**    | cplex (default) |
 |               | maxcol          |
 
 
 ### Extensions
 
-Future extensions of the project include performance improvements and the implementation of a solver (both heuristic and with optimality test) independent of CPLEX.
+Future extensions of the project include performance improvements and the implementation of a solver (both heuristic and with optimality test) that does not depend on CPLEX.
