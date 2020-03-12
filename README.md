@@ -7,8 +7,8 @@ The main ideas used in this project were provided by the works of E. Balas and A
 The implemented approaches have been tested on the `scpnre1-scpnrf5` instances available on the [OR-Library](http://people.brunel.ac.uk/~mastjjb/jeb/orlib/scpinfo.html).
 The results obtained are described in this [report](https://github.com/caerbannogwhite/set-covering-problem/tree/master/report/report.pdf).
 
-The software requires the following software:
-- [CPLEX](https://www.ibm.com/analytics/cplex-optimizer), if you want to build the `cpxsol`
+The solver requires the following software:
+- [CPLEX](https://www.ibm.com/analytics/cplex-optimizer), only if you want to build the `cpxsol`
 - [Boost](https://www.boost.org/)
 - [Armadillo](http://arma.sourceforge.net/)
 - [OpenBLAS](http://www.openblas.net/) (required by Armadillo)
@@ -41,12 +41,12 @@ $ ./lib/cpxsol --inputFile data/scpnre1.txt --solver cplex --timeLimit 10
 
 ### Available Features
 
-|               | Available       |
-|---------------|-----------------|
-| **Presolver** | none (default)  |
-|               | cpxdom          |
-| **Solver**    | cplex (default) |
-|               | maxcol          |
+|               | Available         |
+|---------------|-------------------|
+| **Presolver** | none (default)    |
+|               | `cpxdom`          |
+| **Solver**    | `cplex` (default) |
+|               | `maxcol`          |
 
 
 ### Extensions
