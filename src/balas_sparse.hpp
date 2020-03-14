@@ -11,7 +11,7 @@
 int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x);
 bool balspr_is_cover(arma::sp_mat &mat, arma::sp_mat &x);
 
-//double balspr_heur_primal_0(arma::mat &mat, arma::vec &obj, arma::vec &x, const int whichFunc);
+double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x, const int whichFunc);
 //double balspr_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x);
 //double balspr_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x, arma::vec &s, arma::vec &u);
 

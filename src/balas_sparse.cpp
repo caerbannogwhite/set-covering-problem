@@ -63,231 +63,161 @@ bool balspr_is_cover(arma::sp_mat &mat, arma::sp_mat &x)
 	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
 	(*matDotXPtr) = mat * x.t();
 	return arma::all((*matDotXPtr) > (1.0 - SC_EPSILON_SMALL));
-
-	/*for (auto it = matDotXPtr->cbegin(); it != matDotXPtr->cend(); ++it)
-	{
-		if (*it < (1.0 -  SC_EPSILON_SMALL))
-		{
-			return false;
-		}
-	}
-	return true;*/
 }
 
-/*double SCbalasheurprimal0_sparse(const int *rmatbeg, const int *rmatind, const int *cmatbeg, const int *cmatind,
-								 const double *obj, const int nrows, const int ncols, int *xind, int *xindlen,
-								 const int whichfunc)
+/**
+ * Primal heuristic for the SCP as described in "Set Covering algorithms using cutting
+ * planes, heuristics, and subgradient optimization: a computational study"
+ * by Egon Balas and Andrew Ho - Carnegie-Mellon University, Pittsburgh, PA, U.S.A.
+ * 
+ * Functions description
+ * 
+ * 1 - f(c, k) = c
+ * 
+ * 2 - f(c, k) = c / k
+ * 
+ * 3 - f(c, k) = c 				 	if k < 2 
+ *				 c / log2(k)	 	otherwise
+
+ * 4 - f(c, k) = c / k 			 	if k < 2
+ * 				 c / k * log2(k) 	otherwise
+ * 
+ * 5 - f(c, k) = c / k				if k < 3
+ * 				 c / k * ln(k)		otherwise
+ * 
+ * 6 - f(c, k) = c / k^2
+ * 
+ * 7 - f(c, k) = sqrt(c) / k^2
+ * 
+ * @param mat - arma::mat_sp SCP sparse matrix
+ * @param obj - arma::vac SCP dense objective values
+ * @param x - arma::sp_mat a SCP sparse solution ROW vector
+ * @param whichFunc - select function for heuristic (from 1 to 7)
+ * @return the value of the best primal solution found
+ */
+double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x,
+							const int whichFunc)
 {
+	size_t i;
+	size_t j;
+	int rowIdx;
+	int colIdx;
+	int cnt;
+	double val;
+	double bestVal;
+	double zUpp;
+	double (*func)(const double, const double);
 
-	char flag;
-	int jt, it;
-	int *item, *rset, *rsetnew;
-	int i, j, k, cnt, cvdrows, rsetlen;
-	double v, zu;
-	double (*func)(const double, const int);
-	SCi2tuple *rsettup;
+	std::unique_ptr<std::vector<std::pair<int, int>>> notCoveredRowsPtr(new std::vector<std::pair<int, int>>);
 
-	switch (whichfunc)
+	// all the functions defined by Balas and Ho
+	// plus the last two defined by Vasko and Wilson
+	switch (whichFunc)
 	{
 	case 1:
-		func = &func1;
+		func = [](const double c, const double k) -> double { return c; };
 		break;
 	case 2:
-		func = &func2;
+		func = [](const double c, const double k) -> double { return c / k; };
 		break;
 	case 3:
-		func = &func3;
+		func = [](const double c, const double k) -> double { return k < 2 ? c : c / log2(k); };
 		break;
 	case 4:
-		func = &func4;
+		func = [](const double c, const double k) -> double { return k < 2 ? c / k : c / k * log2(k); };
 		break;
 	case 5:
-		func = &func5;
+		func = [](const double c, const double k) -> double { return k < 3 ? c / k : c / k * log(k); };
+		break;
+	case 6:
+		func = [](const double c, const double k) -> double { return c / (k * k); };
+		break;
+	case 7:
+		func = [](const double c, const double k) -> double { return sqrt(c) / (k * k); };
 		break;
 	default:
-		func = &func3;
+		func = [](const double c, const double k) -> double { return k < 2 ? c : c / log2(k); };
 		break;
 	}
 
-	// cmatbeg = (int *) malloc((ncols + 1) * sizeof(int));
-	// cmatind = (int *) malloc(rmatbeg[nrows] * sizeof(int));
+	// get the starting value of the current solution x
+	zUpp = arma::dot(obj, x);
 
-	// cnt = 0;
-	// for (j = 0; j < ncols; ++j) {
-	// 	cmatbeg[j] = cnt;
-	// 	for (i = 0; i < nrows; ++i) {
-	// 		item = bsearch(&j, &rmatind[rmatbeg[i]], rmatbeg[i+1] - rmatbeg[i], sizeof(int), SCint_cmp);
-	// 		if (item != NULL) {
-	// 			cmatind[cnt] = i;
-	// 			cnt++;
-	// 		}
-	// 	}
-	// }
-	// cmatbeg[ncols] = cnt;
-
-	zu = 0.0;
-	rset = (int *)malloc(nrows * sizeof(int));
-	rsetnew = (int *)malloc(nrows * sizeof(int));
-	rsettup = (SCi2tuple *)malloc(nrows * sizeof(SCi2tuple));
-
-	rsetlen = 0;
-	cvdrows = 0;
-
-	if ((*xindlen) > 0)
+	// find rows not already covered and put them in set R
+	for (i = mat.n_rows; i--;)
 	{
-		for (j = 0; j < (*xindlen); ++j)
+		val = arma::dot(mat.row(i), x);
+		cnt = mat.row(i).n_elem;
+
+		std::cout << "i = " << i << ", elem = " << cnt << std::endl;
+
+		if (fabs(val) < SC_EPSILON_SMALL)
 		{
-			zu += obj[xind[j]];
-		}
-
-		for (i = 0; i < nrows; ++i)
-		{
-
-			flag = 0;
-			j = 0;
-			k = rmatbeg[i];
-			while ((j < (*xindlen)) && (k < rmatbeg[i + 1]))
-			{
-				if (xind[j] == rmatind[k])
-				{
-					flag = 1;
-					break;
-				}
-
-				if (xind[j] < rmatind[k])
-				{
-					j++;
-					continue;
-				}
-
-				if (xind[j] > rmatind[k])
-				{
-					k++;
-					continue;
-				}
-			}
-
-			if (!flag)
-			{
-				rsettup[rsetlen].a = rmatbeg[i + 1] - rmatbeg[i];
-				rsettup[rsetlen].b = i;
-				rsetlen++;
-			}
-			else
-			{
-				cvdrows++;
-			}
+			notCoveredRowsPtr->push_back(std::make_pair(cnt, i));
 		}
 	}
-	else
+
+	// sort not covered rows by decreasing number of
+	// non-zero elements in the row (read notCoveredRowsPtr from back to front)
+	std::sort(notCoveredRowsPtr->begin(), notCoveredRowsPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first < b.first; });
+
+	for (auto p : *notCoveredRowsPtr)
 	{
-		for (i = 0; i < nrows; ++i)
-		{
-			rsettup[i].a = rmatbeg[i + 1] - rmatbeg[i];
-			rsettup[i].b = i;
-		}
-		rsetlen = nrows;
+		std::cout << "val = " << p.first << ", idx = " << p.second << std::endl;
 	}
 
-	qsort(rsettup, rsetlen, sizeof(SCi2tuple), SCi2tuple_cmpa);
-	for (i = 0; i < rsetlen; ++i)
+	while (notCoveredRowsPtr->size() > 0)
 	{
-		rset[i] = rsettup[i].b;
-	}
+		// get last element of set R
+		rowIdx = notCoveredRowsPtr->back().second;
+		notCoveredRowsPtr->pop_back();
 
-	free(rsettup);
-
-	while (cvdrows < nrows)
-	{
-
-		it = rset[0];
-
-		v = INFINITY;
-		jt = -1;
-		for (j = 0; j < ncols; ++j)
+		bestVal = INFINITY;
+		colIdx = -1;
+		for (j = 0; j < mat.n_cols; ++j)
 		{
-
-			flag = 0;
-			cnt = 0;
-			for (i = 0; i < rsetlen; ++i)
-			{
-				if (rset[i] != -1)
-				{
-					item = (int *)bsearch(&rset[i], &cmatind[cmatbeg[j]], cmatbeg[j + 1] - cmatbeg[j], sizeof(int), SCint_cmp);
-					if (item != NULL)
-					{
-						cnt++;
-						if (rset[i] == it)
-						{
-							flag = 1;
-						}
-					}
-				}
-			}
-
-			if (!flag)
+			// if mat[row, col] is 0 or if x(col) is already taken, skip this column
+			if ((fabs(mat(rowIdx, j)) < SC_EPSILON_SMALL) || (x(j) > SC_EPSILON_SMALL))
 			{
 				continue;
 			}
 
-			if (func(obj[j], cnt) < v)
+			val = mat.col(j).n_elem;
+
+			// use the column j that minimise the value
+			// of the selected function
+			if (func(obj(j), val) < bestVal)
 			{
-				v = func(obj[j], cnt);
-				jt = j;
+				bestVal = func(obj(j), val);
+				colIdx = j;
 			}
 		}
 
-		// if (jt == -1) {
-		// 	free(rset);
-		// 	return -1;
-		// }
+		// update solution and objective value
+		x(colIdx) = 1.0;
+		zUpp += obj(colIdx);
 
-xind[*xindlen] = jt;
-*xindlen += 1;
-zu += obj[jt];
-
-cnt = 0;
-for (i = 0; i < rsetlen; ++i)
-{
-	item = (int *)bsearch(&rset[i], &cmatind[cmatbeg[jt]], cmatbeg[jt + 1] - cmatbeg[jt], sizeof(int), SCint_cmp);
-	if (item == NULL)
-	{
-		rsetnew[cnt] = rset[i];
-		cnt++;
+		// remove covered rows from set R
+		for (auto it = notCoveredRowsPtr->begin(); it != notCoveredRowsPtr->end();)
+		{
+			if (fabs(mat((*it).second, colIdx) - 1.0) < SC_EPSILON_SMALL)
+			{
+				notCoveredRowsPtr->erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
 	}
-	else
-	{
-		cvdrows++;
-	}
+
+	// Make the cover a prime cover
+	balspr_make_prime_cover(mat, x);
+
+	return zUpp;
 }
 
-memcpy(rset, rsetnew, cnt * sizeof(int));
-rsetlen = cnt;
-}
-
-free(rset);
-free(rsetnew);
-
-// Make the cover a prime cover
-SCprimecover_sparse(rmatbeg, rmatind, cmatbeg, cmatind, nrows, ncols, xind, *xindlen);
-
-for (i = 0; i < *xindlen; ++i)
-{
-	if (xind[i] == -1)
-	{
-		zu -= obj[xind[i]];
-		*xindlen = *xindlen - 1;
-		memcpy(&xind[i], &xind[i + 1], (*xindlen) * sizeof(int));
-		i--;
-	}
-}
-
-qsort(xind, *xindlen, sizeof(int), SCint_cmp);
-
-return zu;
-}
-
-int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nrows, const int *xind,
+/*int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nrows, const int *xind,
 							const int xindlen, double *u, double *s)
 {
 

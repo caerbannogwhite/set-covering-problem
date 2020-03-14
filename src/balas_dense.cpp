@@ -495,7 +495,7 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 	(*matDotXPtr) = mat * x;
 
 	cntRemoved = 0;
-	for (j = mat.n_cols - 1; j >= 0; --j)
+	for (j = mat.n_cols; j--;)
 	{
 		if (x(j) > SC_EPSILON_SMALL)
 		{
@@ -511,8 +511,8 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 
 			if (x(j) < SC_EPSILON_SMALL)
 			{
-				++cntRemoved;
 				(*matDotXPtr) -= mat.col(j);
+				++cntRemoved;
 			}
 		}
 	}
@@ -538,10 +538,29 @@ bool baldns_is_cover(const arma::mat &mat, const arma::vec &x)
  * planes, heuristics, and subgradient optimization: a computational study"
  * by Egon Balas and Andrew Ho - Carnegie-Mellon University, Pittsburgh, PA, U.S.A.
  * 
+ * Functions description
+ * 
+ * 1 - f(c, k) = c
+ * 
+ * 2 - f(c, k) = c / k
+ * 
+ * 3 - f(c, k) = c 				 	if k < 2 
+ *				 c / log2(k)	 	otherwise
+
+ * 4 - f(c, k) = c / k 			 	if k < 2
+ * 				 c / k * log2(k) 	otherwise
+ * 
+ * 5 - f(c, k) = c / k				if k < 3
+ * 				 c / k * ln(k)		otherwise
+ * 
+ * 6 - f(c, k) = c / k^2
+ * 
+ * 7 - f(c, k) = sqrt(c) / k^2
+ * 
  * @param mat - arma::mat SCP matrix
  * @param obj - arma::vec SCP objective values
  * @param x - arma::vec a solution for the SCP
- * @param whichFunc - select function for heuristic
+ * @param whichFunc - select function for heuristic (from 1 to 7)
  * @return the value of the best primal solution found
  */
 double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
@@ -557,7 +576,7 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 	double cnt;
 	double (*func)(const double, const double);
 
-	std::unique_ptr<std::vector<std::pair<int, int>>> rSetPtr(new std::vector<std::pair<int, int>>);
+	std::unique_ptr<std::vector<std::pair<int, int>>> notCoveredRowsPtr(new std::vector<std::pair<int, int>>); // set R on papers
 
 	// all the functions defined by Balas and Ho
 	// plus the last two defined by Vasko and Wilson
@@ -600,19 +619,19 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 
 		if (fabs(val) < SC_EPSILON_SMALL)
 		{
-			rSetPtr->push_back(std::make_pair(cnt, i));
+			(*notCoveredRowsPtr)[j] = std::make_pair(cnt, i);
 		}
 	}
 
 	// sort not covered rows by decreasing number of
-	// non-zero elements in the row (read rSetPtr from back to front)
-	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first < b.first; });
+	// non-zero elements in the row (read notCoveredRowsPtr from back to front)
+	std::sort(notCoveredRowsPtr->begin(), notCoveredRowsPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
 
-	while (rSetPtr->size() > 0)
+	while (notCoveredRowsPtr->size() > 0)
 	{
 		// get last element of set R
-		rowIdx = rSetPtr->back().second;
-		rSetPtr->pop_back();
+		rowIdx = notCoveredRowsPtr->back().second;
+		notCoveredRowsPtr->pop_back();
 
 		bestVal = INFINITY;
 		colIdx = -1;
@@ -640,11 +659,11 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 		zUpp += obj(colIdx);
 
 		// remove covered rows from set R
-		for (auto it = rSetPtr->begin(); it != rSetPtr->end();)
+		for (auto it = notCoveredRowsPtr->begin(); it != notCoveredRowsPtr->end();)
 		{
 			if (fabs(mat((*it).second, colIdx) - 1.0) < SC_EPSILON_SMALL)
 			{
-				rSetPtr->erase(it);
+				notCoveredRowsPtr->erase(it);
 			}
 			else
 			{
