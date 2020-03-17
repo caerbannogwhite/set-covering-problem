@@ -482,10 +482,12 @@ int baldns_over_sat_rows(arma::mat &mat, arma::vec &x)
  * from x (to make x a prime cover).
  * 
  * @param mat - arma::mat a SCP dense matrix
+ * @param obj - arma::vec SCP objective values
  * @param x - arma::vec a SCP dense solution
+ * @param zUpp - double the current cost of solution x
  * @return the number of removed columns from x
  */
-int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
+int baldns_make_prime_cover(const arma::mat &mat, const arma::vec &obj, arma::vec &x, double &zUpp)
 {
 	int cntRemoved;
 	size_t i;
@@ -512,6 +514,7 @@ int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x)
 			if (x(j) < SC_EPSILON_SMALL)
 			{
 				(*matDotXPtr) -= mat.col(j);
+				zUpp -= obj(j);
 				++cntRemoved;
 			}
 		}
@@ -619,7 +622,7 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 
 		if (fabs(val) < SC_EPSILON_SMALL)
 		{
-			(*notCoveredRowsPtr)[j] = std::make_pair(cnt, i);
+			notCoveredRowsPtr->push_back(std::make_pair(cnt, i));
 		}
 	}
 
@@ -673,7 +676,7 @@ double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj,
 	}
 
 	// make the cover found a prime cover
-	baldns_make_prime_cover(mat, x);
+	baldns_make_prime_cover(mat, obj, x, zUpp);
 
 	return zUpp;
 }
@@ -748,13 +751,15 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 	std::unique_ptr<arma::uvec> indecesPtr(new arma::uvec());
 	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec());
 
+	zUpp = 0.0;
 	(*indecesPtr) = arma::find(s < SC_EPSILON_SMALL);
 	for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 	{
 		x(*jt) = 1.0;
+		zUpp += obj(*jt);
 	}
 
-	baldns_make_prime_cover(mat, x);
+	baldns_make_prime_cover(mat, obj, x, zUpp);
 
 	(*matDotXPtr) = mat * x;
 	cntCoveredRows = 0;
@@ -774,7 +779,7 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 	while (rSetPtr->size() > 0)
 	{
 		// get a row not covered
-		rowIdx = *rSetPtr->begin();
+		rowIdx = *(rSetPtr->begin());
 		rSetPtr->erase(rowIdx);
 
 		val = INFINITY;
@@ -798,9 +803,10 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 		for (auto jt = indecesPtr->cbegin(); jt != indecesPtr->cend(); ++jt)
 		{
 			x(*jt) = 1.0;
+			zUpp += obj(*jt);
 		}
 
-		baldns_make_prime_cover(mat, x);
+		baldns_make_prime_cover(mat, obj, x, zUpp);
 
 		(*matDotXPtr) = mat * x;
 		cntCoveredRows = 0;
@@ -817,9 +823,7 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 		}
 	}
 
-	baldns_make_prime_cover(mat, x);
-
-	zUpp = arma::dot(obj, x);
+	baldns_make_prime_cover(mat, obj, x, zUpp);
 
 	return zUpp;
 }

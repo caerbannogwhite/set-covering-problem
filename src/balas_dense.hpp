@@ -8,7 +8,7 @@ int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp,
 int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::unordered_set<int>> branchSet, const int maxBranch, const int maxSingl);
 
 int baldns_over_sat_rows(arma::mat &mat, arma::vec &x);
-int baldns_make_prime_cover(const arma::mat &mat, arma::vec &x);
+int baldns_make_prime_cover(const arma::mat &mat, const arma::vec &obj, arma::vec &x, double &zUpp);
 bool baldns_is_cover(const arma::mat &mat, const arma::vec &x);
 double baldns_heur_primal_0(arma::mat &mat, arma::vec &obj, arma::vec &x, const int whichFunc);
 double baldns_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x);

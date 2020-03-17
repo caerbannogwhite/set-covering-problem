@@ -36,6 +36,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 1 << arma::endr;
     vals << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE(balspr_is_cover(mat, x));
 
     // x = [1, 0, 1, 0]
@@ -45,6 +46,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 2 << arma::endr;
     vals << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE(balspr_is_cover(mat, x));
 
     // x = [0, 0, 1, 1]
@@ -54,6 +56,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 3 << arma::endr;
     vals << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE(balspr_is_cover(mat, x));
 
     // x = [1, 1, 1, 0]
@@ -64,6 +67,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 2 << arma::endr;
     vals << 1.0 << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE(balspr_is_cover(mat, x));
 
     // x = [1, 1, 0, 1]
@@ -74,6 +78,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 3 << arma::endr;
     vals << 1.0 << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE(balspr_is_cover(mat, x));
 
     // x = [0, 1, 1, 1]
@@ -84,6 +89,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 3 << arma::endr;
     vals << 1.0 << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE(balspr_is_cover(mat, x));
 
     // x = [1, 1, 1, 1]
@@ -95,6 +101,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 3 << arma::endr;
     vals << 1.0 << 1.0 << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE(balspr_is_cover(mat, x));
 
     // NOT COVER
@@ -104,6 +111,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
     locs << 0 << 0 << arma::endr;
     vals << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE_FALSE(balspr_is_cover(mat, x));
 
     // x = [0, 1, 0, 0]
@@ -112,6 +120,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
     locs << 0 << 1 << arma::endr;
     vals << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE_FALSE(balspr_is_cover(mat, x));
 
     // x = [0, 1, 1, 0]
@@ -121,6 +130,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 2 << arma::endr;
     vals << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE_FALSE(balspr_is_cover(mat, x));
 
     // x = [0, 1, 0, 1]
@@ -130,6 +140,7 @@ TEST_CASE("BALAS SPARSE - balspr_is_cover", "[BALAS SPARSE]")
          << 0 << 3 << arma::endr;
     vals << 1.0 << 1.0 << arma::endr;
     x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
+    x = x.t();
     REQUIRE_FALSE(balspr_is_cover(mat, x));
 }
 
@@ -176,9 +187,10 @@ TEST_CASE("BALAS SPARSE - balspr_make_prime_cover", "[BALAS SPARSE]")
           << 0 << 3 << arma::endr;
      vals << 1.0 << 1.0 << 1.0 << 1.0 << arma::endr;
      x = arma::sp_mat(locs.t(), vals, 1, 4, true, false);
-
-     balspr_make_prime_cover(mat, x);
-     objVal = arma::dot(obj, x.t());
+     x = x.t();
+     
+     objVal = arma::dot(x, obj);
+     balspr_make_prime_cover(mat, obj, x, objVal);
 
      REQUIRE(balspr_is_cover(mat, x));
      REQUIRE(fabs(objVal - 2.0) < SC_EPSILON_SMALL);
@@ -226,6 +238,7 @@ TEST_CASE("BALAS SPARSE - balspr_heur_primal_0", "[BALAS SPARSE]")
      locs << 0 << 0 << arma::endr;
      vals << 0.0 << arma::endr;
      x = arma::sp_mat(locs.t(), vals, 1, 4, true, true);
+     x = x.t();
      objVal = balspr_heur_primal_0(mat, obj, x, 3);
      REQUIRE((objVal - 2.0) < SC_EPSILON_SMALL);
 
@@ -235,18 +248,27 @@ TEST_CASE("BALAS SPARSE - balspr_heur_primal_0", "[BALAS SPARSE]")
      obj(2) = 2.0;
      obj(3) = 1.0;
 
-     // COVER
      // x = [0, 0, 0, 0]
      locs.clear();
      vals.clear();
      locs << 0 << 0 << arma::endr;
      vals << 0.0 << arma::endr;
      x = arma::sp_mat(locs.t(), vals, 1, 4, true, true);
+     x = x.t();
      objVal = balspr_heur_primal_0(mat, obj, x, 3);
      REQUIRE((objVal - 3.0) < SC_EPSILON_SMALL);
 
-     // COVER
-     // x = [0, 0, 0, 0]
+     // x = [1, 0, 0, 0]
+     locs.clear();
+     vals.clear();
+     locs << 0 << 0 << arma::endr;
+     vals << 1.0 << arma::endr;
+     x = arma::sp_mat(locs.t(), vals, 1, 4, true, true);
+     x = x.t();
+     objVal = balspr_heur_primal_0(mat, obj, x, 3);
+     REQUIRE((objVal - 5.0) < SC_EPSILON_SMALL);
+
+     // x = [1, 1, 1, 1]
      locs.clear();
      vals.clear();
      locs << 0 << 0 << arma::endr
@@ -255,7 +277,7 @@ TEST_CASE("BALAS SPARSE - balspr_heur_primal_0", "[BALAS SPARSE]")
           << 0 << 3 << arma::endr;
      vals << 1.0 << 1.0 << 1.0 << 1.0 << arma::endr;
      x = arma::sp_mat(locs.t(), vals, 1, 4, true, true);
+     x = x.t();
      objVal = balspr_heur_primal_0(mat, obj, x, 3);
-
-     std::cout << x << std::endl;
+     REQUIRE((objVal - 6.0) < SC_EPSILON_SMALL);
 }

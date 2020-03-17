@@ -8,7 +8,7 @@
 //int balspr_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::unordered_set<int>> branchSet, const int maxBranch, const int maxSingl);
 
 //int balspr_over_sat_rows(arma::mat &mat, arma::vec &x);
-int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x);
+int balspr_make_prime_cover(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x, double &zUpp);
 bool balspr_is_cover(arma::sp_mat &mat, arma::sp_mat &x);
 
 double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x, const int whichFunc);

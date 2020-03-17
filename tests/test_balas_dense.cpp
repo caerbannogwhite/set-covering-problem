@@ -134,8 +134,8 @@ TEST_CASE("BALAS DENSE - baldns_make_prime_cover", "[BALAS DENSE]")
     x(2) = 1.0;
     x(3) = 1.0;
 
-    baldns_make_prime_cover(mat, x);
-    objVal = arma::dot(obj, x);
+    objVal = 5.0;
+    baldns_make_prime_cover(mat, obj, x, objVal);
 
     REQUIRE(baldns_is_cover(mat, x));
     REQUIRE(fabs(objVal - 2.0) < SC_EPSILON_SMALL);

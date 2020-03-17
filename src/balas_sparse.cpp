@@ -6,22 +6,23 @@
  * from x (to make x a prime cover).
  * 
  * @param mat - arma::sp_mat a SCP sparse matrix
- * @param x - arma::sp_mat a SCP sparse solution ROW vector
+ * @param x - arma::sp_mat a SCP sparse solution COLUMN vector
  * @return the number of removed columns from x
  */
-int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
+int balspr_make_prime_cover(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x, double &zUpp)
 {
 	bool remove;
 	int col;
 	int cntRemoved;
 
 	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
-	(*matDotXPtr) = mat * x.t();
+	std::unique_ptr<std::unordered_set<int>> removedColsPtr(new std::unordered_set<int>());
+	(*matDotXPtr) = mat * x;
 
 	cntRemoved = 0;
 	for (auto jt = --x.end(); ; --jt) // Reverse iteration
 	{
-		col = jt.col();
+		col = jt.row();
 		remove = true;
 		for (auto it = mat.begin_col(col); it != mat.end_col(col); ++it)
 		{
@@ -34,10 +35,12 @@ int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
 
 		if (remove)
 		{
-			x(col) = 0.0;
+			zUpp -= obj(col);
+			removedColsPtr->insert(col);
 			++cntRemoved;
 			(*matDotXPtr) -= mat.col(col);
 		}
+
 
 		if (jt == x.begin()) // Check stop condition
 		{
@@ -45,6 +48,10 @@ int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
 		}
 	}
 
+	for (auto jt = removedColsPtr->cbegin(); jt != removedColsPtr->cend(); ++jt)
+	{
+		x(*jt) = 0.0;
+	}
 	x.remove_zeros();
 
 	return cntRemoved;
@@ -55,13 +62,13 @@ int balspr_make_prime_cover(arma::sp_mat &mat, arma::sp_mat &x)
  * return true if x is a cover for mat, false otherwise.
  * 
  * @param mat - arma::sp_mat SCP sparse matrix
- * @param x - arma::sp_mat a SCP sparse solution ROW vector
+ * @param x - arma::sp_mat a SCP sparse solution COLUMN vector
  * @return true if x covers mat, false otherwise
  */
 bool balspr_is_cover(arma::sp_mat &mat, arma::sp_mat &x)
 {
 	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
-	(*matDotXPtr) = mat * x.t();
+	(*matDotXPtr) = mat * x;
 	return arma::all((*matDotXPtr) > (1.0 - SC_EPSILON_SMALL));
 }
 
@@ -91,7 +98,7 @@ bool balspr_is_cover(arma::sp_mat &mat, arma::sp_mat &x)
  * 
  * @param mat - arma::mat_sp SCP sparse matrix
  * @param obj - arma::vac SCP dense objective values
- * @param x - arma::sp_mat a SCP sparse solution ROW vector
+ * @param x - arma::sp_mat a SCP sparse solution COLUMN vector
  * @param whichFunc - select function for heuristic (from 1 to 7)
  * @return the value of the best primal solution found
  */
@@ -146,10 +153,8 @@ double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x,
 	// find rows not already covered and put them in set R
 	for (i = mat.n_rows; i--;)
 	{
-		val = arma::dot(mat.row(i), x);
-		cnt = mat.row(i).n_elem;
-
-		std::cout << "i = " << i << ", elem = " << cnt << std::endl;
+		val = arma::dot(mat.row(i), x.t());
+		cnt = mat.row(i).n_nonzero;
 
 		if (fabs(val) < SC_EPSILON_SMALL)
 		{
@@ -160,11 +165,6 @@ double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x,
 	// sort not covered rows by decreasing number of
 	// non-zero elements in the row (read notCoveredRowsPtr from back to front)
 	std::sort(notCoveredRowsPtr->begin(), notCoveredRowsPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first < b.first; });
-
-	for (auto p : *notCoveredRowsPtr)
-	{
-		std::cout << "val = " << p.first << ", idx = " << p.second << std::endl;
-	}
 
 	while (notCoveredRowsPtr->size() > 0)
 	{
@@ -212,7 +212,7 @@ double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x,
 	}
 
 	// Make the cover a prime cover
-	balspr_make_prime_cover(mat, x);
+	balspr_make_prime_cover(mat, obj, x, zUpp);
 
 	return zUpp;
 }
