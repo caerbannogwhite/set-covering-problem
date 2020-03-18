@@ -3,7 +3,7 @@
 
 #include "balas_common.hpp"
 
-int baldns_cut_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::set<int> &wSet);
+int baldns_separation_proc(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::set<int> &wSet);
 int baldns_branch_rule1(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::set<int>> branchSet, const int maxBranch, const int maxSingl);
 int baldns_branch_rule1_test(arma::mat &mat, arma::vec &x, arma::vec &s, double zUpp, double zLow, std::vector<std::unordered_set<int>> branchSet, const int maxBranch, const int maxSingl);
 

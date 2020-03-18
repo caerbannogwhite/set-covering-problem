@@ -219,6 +219,16 @@ double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x,
 	return zUpp;
 }
 
+/**
+ * Given a SCP sparse matrix mat, the objective vector
+ * obj and a dual solution u, return true if u is a dual
+ * solution for mat and obj, false otherwise.
+ * 
+ * @param mat - arma::sp_mat SCP dense matrix
+ * @param obj - arma::vec objective vector
+ * @param u - arma::vec a SCP dual solution
+ * @return true if u is a dual solution for mat and obj, false otherwise
+ */
 bool balspr_is_dual_sol(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &u)
 {
 	std::unique_ptr<arma::vec> uDotMatPtr(new arma::vec(mat.n_cols));
@@ -230,6 +240,10 @@ bool balspr_is_dual_sol(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &u)
  * Dual heuristic for the SCP as described in "Set Covering algorithms using cutting
  * planes, heuristics, and subgradient optimization: a computational study"
  * by Egon Balas and Andrew Ho - Carnegie-Mellon University, Pittsburgh, PA, U.S.A.
+ * 
+ * Providing a feasible primal solution x and the reduced costs vector s (initialized
+ * as s := obj), this function returns a dual solution u and the reduced costs vector
+ * associated to u.
  * 
  * @param mat - arma::sp_mat SCP sparse matrix
  * @param x - arma::sp_vec a primal solution
