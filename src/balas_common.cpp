@@ -194,7 +194,7 @@ STATUS balcomm_read_instance_dns(BALSOLEnv &inst)
  * @param &inst - SCinstance
  * @returns a status code
  */
-STATUS cpxcomm_read_instance_spr(BALSOLEnv &inst)
+STATUS balcomm_read_instance_spr(BALSOLEnv &inst)
 {
     int m;
     int n;

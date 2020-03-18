@@ -15,7 +15,7 @@ double baldns_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x);
 double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x, arma::vec &s, arma::vec &u);
 
 bool baldns_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u);
-int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s);
-int baldns_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s, const double zUpp);
+double baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s);
+double baldns_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s, const double zUpp);
 
 #endif //BALAS_DENSE_H

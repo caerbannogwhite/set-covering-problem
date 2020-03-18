@@ -10,7 +10,7 @@ PROJ_HOME=/home/macs/coding/optimization/set-covering-problem
 ###############################################################################
 
 CC=g++
-CFLAGS=-g -Wall# -O2 -fpermissive
+CFLAGS=-g -Wall -O2 -fpermissive
 
 LDLIBS=-L$(BOOST_HOME)/stage/lib -lboost_program_options -lm -lpthread -ldl -larmadillo
 LDLIBSCPX=-L$(CPLEX_HOME)/cplex/lib/x86-64_linux/static_pic -lcplex $(LDLIBS) 

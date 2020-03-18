@@ -15,8 +15,8 @@ double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x, 
 //double balspr_heur_primal_12(arma::mat &mat, arma::vec &obj, arma::vec &x);
 //double balspr_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x, arma::vec &s, arma::vec &u);
 
-//bool balspr_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u);
-//int balspr_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s);
+bool balspr_is_dual_sol(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &u);
+double balspr_heur_dual_1(arma::sp_mat &mat, arma::sp_mat &x, arma::vec &u, arma::vec &s);
 //int balspr_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u, arma::vec &s, const double zUpp);
 
 #endif // BALAS_SPARSE_H

@@ -6,7 +6,9 @@
  * from x (to make x a prime cover).
  * 
  * @param mat - arma::sp_mat a SCP sparse matrix
+ * @param obj - arma::vac SCP dense objective values
  * @param x - arma::sp_mat a SCP sparse solution COLUMN vector
+ * @param zUpp - double the current cost of solution x
  * @return the number of removed columns from x
  */
 int balspr_make_prime_cover(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x, double &zUpp)
@@ -217,133 +219,100 @@ double balspr_heur_primal_0(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &x,
 	return zUpp;
 }
 
-/*int SCbalasheurdual1_sparse(const int *rmatbeg, const int *rmatind, const int nrows, const int *xind,
-							const int xindlen, double *u, double *s)
+bool balspr_is_dual_sol(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &u)
 {
+	std::unique_ptr<arma::vec> uDotMatPtr(new arma::vec(mat.n_cols));
+	(*uDotMatPtr) = u * mat;
 
-	int cnt, firsttime, itercnt, i, j, k, row, srtrowslen = 0;
-	SCi2tuple *srtrows;
-
-	for (i = 0; i < nrows; ++i)
-	{
-		u[i] = 0.0;
-	}
-
-	srtrows = (SCi2tuple *)malloc(nrows * sizeof(SCi2tuple));
-	for (i = 0; i < nrows; ++i)
-	{
-
-		// No need to generate R and T(x) sets: cnt says how
-		// much a row is covered and if cnt < 1 (minimum
-		// cover) skip the row
-		cnt = 0;
-		j = rmatbeg[i];
-		k = 0;
-		while (j < rmatbeg[i + 1] && k < xindlen)
-		{
-			if (rmatind[j] == xind[k])
-			{
-				cnt++;
-				j++;
-				k++;
-				continue;
-			}
-
-			if (rmatind[j] < xind[k])
-			{
-				j++;
-				continue;
-			}
-
-			if (rmatind[j] > xind[k])
-			{
-				k++;
-				continue;
-			}
-		}
-
-		if (cnt == 1)
-		{
-			srtrows[srtrowslen].a = rmatbeg[i + 1] - rmatbeg[i];
-			srtrows[srtrowslen++].b = i;
-		}
-	}
-
-	qsort(srtrows, srtrowslen, sizeof(SCi2tuple), SCi2tuple_cmpa);
-
-	itercnt = 0;
-	firsttime = 1;
-
-	while (itercnt < srtrowslen)
-	{
-
-		row = srtrows[itercnt++].b;
-
-		u[row] = INFINITY;
-		for (j = rmatbeg[row]; j < rmatbeg[row + 1]; ++j)
-		{
-			u[row] = (s[rmatind[j]] < u[row]) ? s[rmatind[j]] : u[row];
-		}
-
-		for (j = rmatbeg[row]; j < rmatbeg[row + 1]; ++j)
-		{
-			s[rmatind[j]] -= u[row];
-		}
-
-		if ((itercnt == srtrowslen) && firsttime)
-		{
-
-			itercnt = 0;
-			firsttime = 0;
-			srtrowslen = 0;
-
-			for (i = 0; i < nrows; ++i)
-			{
-
-				// No need to generate R and T(x) sets: cnt says how
-				// much a row is covered and if cnt < 1 (minimum
-				// cover) skip the row
-				cnt = 0;
-				j = rmatbeg[i];
-				k = 0;
-				while (j < rmatbeg[i + 1] && k < xindlen)
-				{
-					if (rmatind[j] == xind[k])
-					{
-						cnt++;
-						j++;
-						k++;
-						continue;
-					}
-
-					if (rmatind[j] < xind[k])
-					{
-						j++;
-						continue;
-					}
-
-					if (rmatind[j] > xind[k])
-					{
-						k++;
-						continue;
-					}
-				}
-
-				if (cnt > 1)
-				{
-					srtrows[srtrowslen].a = rmatbeg[i + 1] - rmatbeg[i];
-					srtrows[srtrowslen++].b = i;
-				}
-			}
-			qsort(srtrows, srtrowslen, sizeof(SCi2tuple), SCi2tuple_cmpa);
-		}
-	}
-
-	free(srtrows);
-	return 0;
+	return arma::all((obj - (*uDotMatPtr)) > 0.0);
 }
 
-int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nrows,
+/**
+ * Dual heuristic for the SCP as described in "Set Covering algorithms using cutting
+ * planes, heuristics, and subgradient optimization: a computational study"
+ * by Egon Balas and Andrew Ho - Carnegie-Mellon University, Pittsburgh, PA, U.S.A.
+ * 
+ * @param mat - arma::sp_mat SCP sparse matrix
+ * @param x - arma::sp_vec a primal solution
+ * @param u - arma::vec dual vector
+ * @param s - arma::vec reduced costs vector
+ * @return
+ */
+double balspr_heur_dual_1(arma::sp_mat &mat, arma::sp_mat &x, arma::vec &u,
+					   arma::vec &s)
+{
+	bool firstTime;
+	size_t i;
+	size_t j;
+	size_t rowIdx;
+	double cnt;
+	double val;
+	double zLow;
+
+	std::unique_ptr<std::vector<std::pair<double, int>>> rSetPtr(new std::vector<std::pair<double, int>>);
+
+	zLow = 0.0;
+	u.fill(0.0);
+
+	for (i = 0; i < mat.n_rows; ++i)
+	{
+		// No need to generate R and T(x) sets: val says how
+		// much a row is covered and if val < 1 (minimum
+		// cover) skip the row
+		val = arma::dot(mat.row(i), x.t());
+		cnt = mat.row(i).n_nonzero;
+
+		if (fabs(val - 1.0) < SC_EPSILON_SMALL)
+		{
+			rSetPtr->push_back(std::make_pair(cnt, i));
+		}
+	}
+
+	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
+
+	firstTime = true;
+	while (rSetPtr->size() > 0)
+	{
+		rowIdx = rSetPtr->back().second;
+		rSetPtr->pop_back();
+
+		u(rowIdx) = DBL_MAX;
+		for (j = 0; j < mat.n_cols; ++j)
+		{
+			//std::cout << "rowIdx = " << rowIdx << " - j = " << j << " - s(j) = " << s(j) << " - u = " << u(rowIdx) << std::endl;
+			u(rowIdx) = (mat(rowIdx, j) > SC_EPSILON_SMALL) && (s(j) < u(rowIdx)) ? s(j) : u(rowIdx);
+		}
+		zLow += u(rowIdx);
+
+		s -= u(rowIdx) * mat.row(rowIdx).t();
+
+		if ((rSetPtr->size() == 0) && firstTime)
+		{
+			firstTime = false;
+			rSetPtr->clear();
+
+			for (i = 0; i < mat.n_rows; ++i)
+			{
+				// No need to generate R and T(x) sets: val says how
+				// much a row is covered and if val < 1 (minimum
+				// cover) skip the row
+				val = arma::dot(mat.row(i), x.t());
+				cnt = mat.row(i).n_nonzero;
+
+				if (fabs(val - 1.0) < SC_EPSILON_SMALL)
+				{
+					rSetPtr->push_back(std::make_pair(cnt, i));
+				}
+			}
+
+			std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
+		}
+	}
+
+	return zLow;
+}
+
+/*int SCbalasheurdual3_sparse(const int *rmatbeg, const int *rmatind, const int nrows,
 							const int *xind, int xindlen, double *u, double *s, const double zu)
 {
 

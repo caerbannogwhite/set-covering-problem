@@ -830,7 +830,7 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 
 bool baldns_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u)
 {
-	return arma::all((obj - (u * mat)) > 0.0);
+	return arma::all((obj.t() - (u.t() * mat)) > 0.0);
 }
 
 /**
@@ -844,18 +844,20 @@ bool baldns_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u)
  * @param s - arma::vec reduced costs vector
  * @return
  */
-int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
-					   arma::vec &s)
+double baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
+						  arma::vec &s)
 {
 	bool firstTime;
-	size_t cnt;
 	size_t i;
 	size_t j;
 	size_t rowIdx;
+	double cnt;
 	double val;
+	double zLow;
 
-	std::unique_ptr<std::vector<std::pair<int, int>>> rSetPtr(new std::vector<std::pair<int, int>>);
+	std::unique_ptr<std::vector<std::pair<double, int>>> rSetPtr(new std::vector<std::pair<double, int>>);
 
+	zLow = 0.0;
 	u.fill(0.0);
 
 	for (i = 0; i < mat.n_rows; ++i)
@@ -864,7 +866,7 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 		// much a row is covered and if val < 1 (minimum
 		// cover) skip the row
 		val = arma::dot(mat.row(i), x);
-		cnt = round(arma::sum(mat.row(i)));
+		cnt = arma::sum(mat.row(i));
 
 		if (fabs(val - 1.0) < SC_EPSILON_SMALL)
 		{
@@ -872,7 +874,7 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 		}
 	}
 
-	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
+	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
 
 	firstTime = true;
 	while (rSetPtr->size() > 0)
@@ -880,13 +882,16 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 		rowIdx = rSetPtr->back().second;
 		rSetPtr->pop_back();
 
-		u(rowIdx) = INFINITY;
+		u(rowIdx) = DBL_MAX;
 		for (j = 0; j < mat.n_cols; ++j)
 		{
-			u(rowIdx) = mat(rowIdx, j) * (s(j) < u(rowIdx) ? s(j) : u(rowIdx));
-		}
+			//std::cout << "rowIdx = " << rowIdx << " - j = " << j << " - s(j) = " << s(j) << " - u = " << u(rowIdx) << std::endl;
+			u(rowIdx) = (mat(rowIdx, j) > SC_EPSILON_SMALL) && (s(j) < u(rowIdx)) ? s(j) : u(rowIdx);
 
-		s -= u(rowIdx) * mat.row(rowIdx);
+		}
+		zLow += u(rowIdx);
+
+		s -= u(rowIdx) * mat.row(rowIdx).t();
 
 		if ((rSetPtr->size() == 0) && firstTime)
 		{
@@ -907,11 +912,11 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 				}
 			}
 
-			std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<int, int> a, std::pair<int, int> b) -> bool { return a.first > b.first; });
+			std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
 		}
 	}
 
-	return 0;
+	return zLow;
 }
 
 /**
@@ -926,63 +931,63 @@ int baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
  * @param zUpp - the value of current solution (x dot obj)
  * @return 
  */
-int baldns_heur_dual_3(arma::mat &mat, arma::vec &x, arma::vec &u,
-					   arma::vec &s, const double zUpp)
-{
-	int rowIdx;
-	size_t i;
-	double sDotX;
-	double zLow;
-	double val;
+			double baldns_heur_dual_3(arma::mat & mat, arma::vec & x, arma::vec & u,
+									  arma::vec & s, const double zUpp)
+			{
+				int rowIdx;
+				size_t i;
+				double sDotX;
+				double zLow;
+				double val;
 
-	std::unique_ptr<std::vector<std::pair<double, int>>> rSetPtr(new std::vector<std::pair<double, int>>);
+				std::unique_ptr<std::vector<std::pair<double, int>>> rSetPtr(new std::vector<std::pair<double, int>>);
 
-	sDotX = arma::dot(s, x);
-	zLow = arma::sum(u);
+				sDotX = arma::dot(s, x);
+				zLow = arma::sum(u);
 
-	if (sDotX >= (zUpp - zLow))
-	{
-		return 0;
-	}
+				if (sDotX >= (zUpp - zLow))
+				{
+					return 0;
+				}
 
-	for (i = 0; i < mat.n_rows; ++i)
-	{
+				for (i = 0; i < mat.n_rows; ++i)
+				{
 
-		// No need to generate R and T(x) sets: val says how
-		// much a row is covered and if val < 1 (minimum
-		// cover) skip the row
-		val = arma::dot(mat.row(i), x);
+					// No need to generate R and T(x) sets: val says how
+					// much a row is covered and if val < 1 (minimum
+					// cover) skip the row
+					val = arma::dot(mat.row(i), x);
 
-		if ((u(i) > 0) && (val > 1.0))
-		{
-			rSetPtr->push_back(std::make_pair(val, i));
-		}
-	}
+					if ((u(i) > 0) && (val > 1.0))
+					{
+						rSetPtr->push_back(std::make_pair(val, i));
+					}
+				}
 
-	if (rSetPtr->size() == 0)
-	{
-		return 0;
-	}
+				if (rSetPtr->size() == 0)
+				{
+					return 0;
+				}
 
-	std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
+				std::sort(rSetPtr->begin(), rSetPtr->end(), [](std::pair<double, int> a, std::pair<double, int> b) -> bool { return a.first > b.first; });
 
-	while (sDotX < (zUpp - zLow - SC_EPSILON_SMALL))
-	{
-		rowIdx = rSetPtr->back().second;
-		rSetPtr->pop_back();
+				while (sDotX < (zUpp - zLow - SC_EPSILON_SMALL))
+				{
+					rowIdx = rSetPtr->back().second;
+					rSetPtr->pop_back();
 
-		val = u(rowIdx);
-		s += val * mat.row(rowIdx);
-		sDotX += val * arma::dot(mat.row(rowIdx), x);
+					val = u(rowIdx);
+					s += val * mat.row(rowIdx);
+					sDotX += val * arma::dot(mat.row(rowIdx), x);
 
-		zLow -= val;
-		u(rowIdx) = 0.0;
-	}
+					zLow -= val;
+					u(rowIdx) = 0.0;
+				}
 
-	return 0;
+				return zLow;
 }
 
-int baldns_dual_subgrad(arma::mat &mat, arma::vec &obj, arma::vec &x,
+double baldns_dual_subgrad(arma::mat &mat, arma::vec &obj, arma::vec &x,
 							 arma::vec &u)
 {
 	int cntIter;
