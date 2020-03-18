@@ -830,7 +830,7 @@ double baldns_heur_primal_5b(arma::mat &mat, arma::vec &obj, arma::vec &x,
 
 bool baldns_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u)
 {
-	return arma::all((obj.t() - (u.t() * mat)) > 0.0);
+	return arma::all((obj.t() - (u.t() * mat)) >= 0.0);
 }
 
 /**
@@ -842,7 +842,7 @@ bool baldns_is_dual_sol(arma::mat &mat, arma::vec &obj, arma::vec &u)
  * @param x - arma::vec a primal solution
  * @param u - arma::vec dual vector
  * @param s - arma::vec reduced costs vector
- * @return
+ * @return the value of the dual solution
  */
 double baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 						  arma::vec &s)
@@ -852,24 +852,21 @@ double baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 	size_t j;
 	size_t rowIdx;
 	double cnt;
-	double val;
 	double zLow;
 
 	std::unique_ptr<std::vector<std::pair<double, int>>> rSetPtr(new std::vector<std::pair<double, int>>);
+	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
 
 	zLow = 0.0;
 	u.fill(0.0);
+	(*matDotXPtr) = mat * x;
 
 	for (i = 0; i < mat.n_rows; ++i)
 	{
-		// No need to generate R and T(x) sets: val says how
-		// much a row is covered and if val < 1 (minimum
-		// cover) skip the row
-		val = arma::dot(mat.row(i), x);
-		cnt = arma::sum(mat.row(i));
-
-		if (fabs(val - 1.0) < SC_EPSILON_SMALL)
+		// R := M intersection T(x)
+		if (fabs((*matDotXPtr)(i)-1.0) < SC_EPSILON_SMALL)
 		{
+			cnt = arma::sum(mat.row(i));
 			rSetPtr->push_back(std::make_pair(cnt, i));
 		}
 	}
@@ -885,9 +882,7 @@ double baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 		u(rowIdx) = DBL_MAX;
 		for (j = 0; j < mat.n_cols; ++j)
 		{
-			//std::cout << "rowIdx = " << rowIdx << " - j = " << j << " - s(j) = " << s(j) << " - u = " << u(rowIdx) << std::endl;
 			u(rowIdx) = (mat(rowIdx, j) > SC_EPSILON_SMALL) && (s(j) < u(rowIdx)) ? s(j) : u(rowIdx);
-
 		}
 		zLow += u(rowIdx);
 
@@ -900,14 +895,10 @@ double baldns_heur_dual_1(arma::mat &mat, arma::vec &x, arma::vec &u,
 
 			for (i = 0; i < mat.n_rows; ++i)
 			{
-				// No need to generate R and T(x) sets: val says how
-				// much a row is covered and if val < 1 (minimum
-				// cover) skip the row
-				val = arma::dot(mat.row(i), x);
-				cnt = arma::sum(mat.row(i));
-
-				if (fabs(val - 1.0) < SC_EPSILON_SMALL)
+				// R := M / T(x)
+				if (!(fabs((*matDotXPtr)(i)-1.0) < SC_EPSILON_SMALL))
 				{
+					cnt = arma::sum(mat.row(i));
 					rSetPtr->push_back(std::make_pair(cnt, i));
 				}
 			}

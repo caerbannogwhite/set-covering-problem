@@ -223,8 +223,7 @@ bool balspr_is_dual_sol(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &u)
 {
 	std::unique_ptr<arma::vec> uDotMatPtr(new arma::vec(mat.n_cols));
 	(*uDotMatPtr) = u * mat;
-
-	return arma::all((obj - (*uDotMatPtr)) > 0.0);
+	return arma::all((obj - (*uDotMatPtr)) >= 0.0);
 }
 
 /**
@@ -236,34 +235,32 @@ bool balspr_is_dual_sol(arma::sp_mat &mat, arma::vec &obj, arma::sp_mat &u)
  * @param x - arma::sp_vec a primal solution
  * @param u - arma::vec dual vector
  * @param s - arma::vec reduced costs vector
- * @return
+ * @return the value of the dual solution
  */
 double balspr_heur_dual_1(arma::sp_mat &mat, arma::sp_mat &x, arma::vec &u,
-					   arma::vec &s)
+						  arma::vec &s)
 {
 	bool firstTime;
 	size_t i;
-	size_t j;
 	size_t rowIdx;
 	double cnt;
-	double val;
 	double zLow;
 
 	std::unique_ptr<std::vector<std::pair<double, int>>> rSetPtr(new std::vector<std::pair<double, int>>);
+	std::unique_ptr<arma::vec> matDotXPtr(new arma::vec(mat.n_rows));
+
+	(*matDotXPtr) = mat * x;
 
 	zLow = 0.0;
 	u.fill(0.0);
+	(*matDotXPtr) = mat * x;
 
 	for (i = 0; i < mat.n_rows; ++i)
 	{
-		// No need to generate R and T(x) sets: val says how
-		// much a row is covered and if val < 1 (minimum
-		// cover) skip the row
-		val = arma::dot(mat.row(i), x.t());
-		cnt = mat.row(i).n_nonzero;
-
-		if (fabs(val - 1.0) < SC_EPSILON_SMALL)
+		// R := M intersection T(x)  
+		if (fabs((*matDotXPtr)(i) - 1.0) < SC_EPSILON_SMALL)
 		{
+			cnt = mat.row(i).n_nonzero;
 			rSetPtr->push_back(std::make_pair(cnt, i));
 		}
 	}
@@ -277,11 +274,11 @@ double balspr_heur_dual_1(arma::sp_mat &mat, arma::sp_mat &x, arma::vec &u,
 		rSetPtr->pop_back();
 
 		u(rowIdx) = DBL_MAX;
-		for (j = 0; j < mat.n_cols; ++j)
+		for (auto jt = mat.row(rowIdx).cbegin(); jt != mat.row(rowIdx).cend(); ++jt)
 		{
-			//std::cout << "rowIdx = " << rowIdx << " - j = " << j << " - s(j) = " << s(j) << " - u = " << u(rowIdx) << std::endl;
-			u(rowIdx) = (mat(rowIdx, j) > SC_EPSILON_SMALL) && (s(j) < u(rowIdx)) ? s(j) : u(rowIdx);
+			u(rowIdx) = (s(jt.col()) < u(rowIdx)) ? s(jt.col()) : u(rowIdx);
 		}
+
 		zLow += u(rowIdx);
 
 		s -= u(rowIdx) * mat.row(rowIdx).t();
@@ -291,16 +288,12 @@ double balspr_heur_dual_1(arma::sp_mat &mat, arma::sp_mat &x, arma::vec &u,
 			firstTime = false;
 			rSetPtr->clear();
 
+			// R = M / T(x)
 			for (i = 0; i < mat.n_rows; ++i)
 			{
-				// No need to generate R and T(x) sets: val says how
-				// much a row is covered and if val < 1 (minimum
-				// cover) skip the row
-				val = arma::dot(mat.row(i), x.t());
-				cnt = mat.row(i).n_nonzero;
-
-				if (fabs(val - 1.0) < SC_EPSILON_SMALL)
+				if (!(fabs((*matDotXPtr)(i)-1.0) < SC_EPSILON_SMALL))
 				{
+					cnt = mat.row(i).n_nonzero;
 					rSetPtr->push_back(std::make_pair(cnt, i));
 				}
 			}
@@ -435,9 +428,6 @@ double balspr_heur_dual_1(arma::sp_mat &mat, arma::sp_mat &x, arma::vec &u,
 		u[row] = 0.0;
 	}
 
-	free(srtrows);
-
-TERMINATE:
 	return 0;
 }
 
@@ -737,17 +727,6 @@ int SCbalasbranchrule1_sparse(const int *rmatbeg, const int *rmatind, const int 
 		}
 
 		p++;
-	}
-
-	free(sind);
-	free(txind);
-	free(jind);
-	free(mjind);
-	free(tmp);
-
-	if (p < 0)
-	{
-		return p;
 	}
 	return (qnzcnt > p * log2(p)) ? p : -1;
 }*/

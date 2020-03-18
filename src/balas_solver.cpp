@@ -6,13 +6,12 @@ STATUS balsol(BALSOLEnv &inst)
 {
     double val;
 
-
-
     //////////////////////////////      DENSE       //////////////////////////
     balcomm_read_instance_dns(inst);
 
     arma::vec x = arma::vec(inst.dnsmat.n_cols);
     arma::vec u = arma::vec(inst.dnsmat.n_rows);
+    arma::vec uDotMat = arma::vec(inst.dnsmat.n_cols);
     arma::vec s;
 
     std::cout << "BALAS SOLVER - DENSE" << std::endl;
@@ -30,11 +29,19 @@ STATUS balsol(BALSOLEnv &inst)
     s = arma::vec(inst.dnsobj);
     val = baldns_heur_dual_1(inst.dnsmat, x, u, s);
     std::cout << "is dual sol = " << baldns_is_dual_sol(inst.dnsmat, inst.dnsobj, u) << std::endl;
+
+    /*uDotMat = u.t() * inst.dnsmat;
+    for (int i = 0; i < inst.sprmat.n_cols; ++i)
+    {
+        std::cout << uDotMat(i) << " - " << inst.dnsobj(i);
+    }*/
+
     std::cout << "dual val = " << val << std::endl;
     //std::cout << "u =\n"
     //          << u << std::endl;
     //std::cout << "s =\n"
     //          << s << std::endl;
+
 
 
 
@@ -60,6 +67,13 @@ STATUS balsol(BALSOLEnv &inst)
     s = arma::vec(inst.dnsobj);
     val = balspr_heur_dual_1(inst.sprmat, xSpr, u, s);
     std::cout << "is dual sol = " << baldns_is_dual_sol(inst.dnsmat, inst.dnsobj, u) << std::endl;
+
+    /*uDotMat = u.t() * inst.sprmat;
+    for (int i = 0; i < inst.sprmat.n_cols; ++i)
+    {
+        std::cout << uDotMat(i) << " - " << inst.dnsobj(i);
+    }*/
+
     std::cout << "dual val = " << val << std::endl;
     //std::cout << "u =\n"
     //          << u << std::endl;
